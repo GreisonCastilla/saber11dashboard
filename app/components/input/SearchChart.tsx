@@ -23,7 +23,7 @@ export default function SearchChart({ onSearch, delay = 800, placeholder = "Busc
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            className="w-full border p-1 rounded-lg outline-none dark:border-white"
+            className="w-full border-b-2 p-1 focus:border-primary transition-colors duration-500 outline-none dark:border-white"
             placeholder={placeholder}
             aria-label="buscar gráficos"
         />

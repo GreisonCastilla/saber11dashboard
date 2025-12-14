@@ -32,13 +32,13 @@ export default function Sidebar() {
   return (
     <aside
       className={
-        "flex flex-col bg-white h-full dark:bg-gray-900 p-4 transition-all ease-in-out duration-500 " +
+        "flex flex-col absolute  border-r dark:border-gray-700 border-gray-300 bg-white h-full dark:bg-gray-900 p-4 transition-all ease-in-out duration-500 " +
         (state
-          ? " w-72"
-          : " w-10 max-h-10 m-2 rounded-lg justify-center items-center")
+          ? " w-72 md:static"
+          : " w-10 max-h-10 m-2 absolute border-r-0 rounded-lg justify-center items-center")
       }
     >
-      <div className="flex mt-3">
+      <div className="flex items-center ">
         <HiChevronLeft
           onClick={toggleSidebar}
           className={
