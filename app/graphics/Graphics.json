@@ -1,0 +1,73 @@
+
+[
+  {
+    "id": 1,
+    "name": "Naturaleza por áreas",
+    "typeChart": "bar"
+  },
+  {
+    "id": 2,
+    "name": "Naturaleza por promedio global",
+    "typeChart": "bar"
+  },
+  {
+    "id": 3,
+    "name": "Colegio X vs Bolívar (áreas)",
+    "typeChart": "bar"
+  },
+  {
+    "id": 4,
+    "name": "Colegio X vs Bolívar (global)",
+    "typeChart": "HorizontalBar"
+  },
+  {
+    "id": 5,
+    "name": "Colegio X vs Colombia (áreas)",
+    "typeChart": "bar"
+  },
+  {
+    "id": 6,
+    "name": "Colegio X vs Colombia (global)",
+    "typeChart": "HorizontalBar"
+  },
+  {
+    "id": 7,
+    "name": "Estrato vs áreas",
+    "typeChart": "bar"
+  },
+  {
+    "id": 8,
+    "name": "Estrato vs global",
+    "typeChart": "bar"
+  },
+  {
+    "id": 9,
+    "name": "Educación padre por promedio global",
+    "typeChart": "bar"
+  },
+  {
+    "id": 10,
+    "name": "Educación madre por promedio global",
+    "typeChart": "bar"
+  },
+  {
+    "id": 11,
+    "name": "Bolívar vs Colombia (áreas)",
+    "typeChart": "bar"
+  },
+  {
+    "id": 12,
+    "name": "Bolívar vs Colombia (global)",
+    "typeChart": "HorizontalBar"
+  },
+  {
+    "id": 13,
+    "name": "Evolución global Colegio X",
+    "typeChart": "line"
+  },
+  {
+    "id": 14,
+    "name": "Evolución áreas Colegio X",
+    "typeChart": "line"
+  }
+]
