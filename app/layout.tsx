@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AccessibilityProvider } from "./contexts/AccessibilityContext";
+import { ChartProvider } from "./contexts/ChartContext";
+import AccessibilityButton from "./components/AccessibilityButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,9 +28,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable}antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <AccessibilityProvider>
+          <ChartProvider>
+            <div style={{ fontSize: 'var(--font-size, 1rem)' }}>
+              {children}
+            </div>
+            <AccessibilityButton />
+          </ChartProvider>
+        </AccessibilityProvider>
       </body>
     </html>
   );

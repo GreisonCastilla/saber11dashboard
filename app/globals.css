@@ -1,8 +1,11 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-size: 1rem;
+  /* Default font size */
 }
 
 @theme inline {
@@ -13,11 +16,13 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+html {
+  font-size: var(--font-size);
 }
 
 body {
@@ -32,6 +37,7 @@ body {
     opacity: 0;
     transform: translateY(8px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -41,6 +47,7 @@ body {
 .animate-fade-in-up {
   animation-name: fade-in-up;
   animation-duration: 320ms;
-  animation-timing-function: cubic-bezier(.22,.9,.31,1);
-  animation-fill-mode: forwards; /* keep final state */
+  animation-timing-function: cubic-bezier(.22, .9, .31, 1);
+  animation-fill-mode: forwards;
+  /* keep final state */
 }
