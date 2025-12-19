@@ -13,17 +13,17 @@ export interface ChartInstance {
 
 interface ChartContextType {
     activeCharts: ChartInstance[];
-    layout: Layout[];
+    layout: Layout;
     addChart: (chartData: any) => void;
     removeChart: (instanceId: string) => void;
-    updateLayout: (newLayout: Layout[]) => void;
+    updateLayout: (newLayout: Layout) => void;
 }
 
 const ChartContext = createContext<ChartContextType | undefined>(undefined);
 
 export function ChartProvider({ children }: { children: ReactNode }) {
     const [activeCharts, setActiveCharts] = useState<ChartInstance[]>([]);
-    const [layout, setLayout] = useState<Layout[]>([]);
+    const [layout, setLayout] = useState<Layout>([]);
 
     const addChart = (chartData: any) => {
         const instanceId = `${chartData.id}-${Date.now()}`;
@@ -37,25 +37,24 @@ export function ChartProvider({ children }: { children: ReactNode }) {
         setActiveCharts((prev) => [...prev, newChart]);
         
         // Add new item to layout
-        // We'll place it at 0,0 by default, 
-        // react-grid-layout should handle overlap if instructed, or we can find next spot.
-        // For simplicity, let's just append.
-        const newLayoutItem: Layout = {
+        const newLayoutItem = {
             i: instanceId,
             x: 0,
             y: Infinity, // Put it at the bottom
             w: 2,
             h: 2,
         };
+        // @ts-ignore
         setLayout((prev) => [...prev, newLayoutItem]);
     };
 
     const removeChart = (instanceId: string) => {
         setActiveCharts((prev) => prev.filter((c) => c.instanceId !== instanceId));
+        // @ts-ignore
         setLayout((prev) => prev.filter((l) => l.i !== instanceId));
     };
 
-    const updateLayout = (newLayout: Layout[]) => {
+    const updateLayout = (newLayout: Layout) => {
         setLayout(newLayout);
     };
 
