@@ -15,13 +15,18 @@ import {
     processGlobalScoreByEducationPadre,
     processGlobalScoreByEducationMadre,
     processBolivarVsNationalAreas,
-    processBolivarVsNationalGlobal
+    processBolivarVsNationalGlobal,
+    processEvolutionGlobal,
+    processEvolutionAreas,
+    processByGender
 } from "../../services/dataProcessor";
 import BarChartSelect from "./BarChartSelect";
 import BarChartCompare from "./BarChartCompare";
 import BarChartGrouped from "./BarChartGrouped";
 import BarChartHorizontalSelector from "./BarChartHorizontalSelector";
 import BarChartCategories from "./BarChartCategories";
+import LineChartSelect from "./LineChartSelect";
+import PieChart from "./PieChart";
 
 export default function ChartContainer({
      chartInfo
@@ -35,6 +40,7 @@ export default function ChartContainer({
 }) {
     const { removeChart } = useChart();
     const [processedData, setProcessedData] = useState<any[]>([]);
+    const [bolivarSchools, setBolivarSchools] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -42,6 +48,7 @@ export default function ChartContainer({
                 const rawData = await dbService.getData('apiResponse');
                 if (rawData) {
                     const parsedData = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                    updateBolivarSchools(parsedData);
                     reprocessData(parsedData);
                 }
             } catch (error) {
@@ -51,12 +58,28 @@ export default function ChartContainer({
         fetchData();
     }, [chartInfo.instanceId, chartInfo.chartId]);
 
+    const updateBolivarSchools = (data: any[]) => {
+        const schools = Array.from(new Set(data
+            .filter((item: any) => (item.cole_depto_ubicacion || item.COLE_DEPTO_UBICACION) === 'BOLIVAR')
+            .map((item: any) => item.cole_nombre_establecimiento || item.COLE_NOMBRE_ESTABLECIMIENTO)
+            .filter(name => name && name !== 'PROMEDIO BOLIVAR' && name !== 'PROMEDIO COLOMBIA')
+        )) as string[];
+        
+        setBolivarSchools(prev => {
+            const combined = Array.from(new Set([...prev, ...schools]));
+            return combined.sort();
+        });
+    };
+
     const handleSelectionChange = async (option: string, year: number) => {
         try {
             let query = "";
             if ([3, 4, 5, 6].includes(chartInfo.chartId)) {
                 console.log(`Fetching targeted data for ${option} in ${year}...`);
                 query = `SELECT * WHERE COLE_NOMBRE_ESTABLECIMIENTO = '${option}' AND PERIODO LIKE '${year}%'`;
+            } else if ([13, 14].includes(chartInfo.chartId)) {
+                console.log(`Fetching historical data for ${option}...`);
+                query = `SELECT * WHERE COLE_NOMBRE_ESTABLECIMIENTO = '${option}'`;
             } else {
                  console.log(`Fetching general data for year ${year}...`);
                  query = `SELECT * WHERE PERIODO LIKE '${year}%'`;
@@ -92,6 +115,12 @@ export default function ChartContainer({
                     return !(matchesSchool && matchesYear);
                 });
                 mergedData = [...otherData, ...formattedNewData];
+            } else if ([13, 14].includes(chartInfo.chartId) && option) {
+                // Remove all history for this specific school
+                const otherData = currentData.filter((item: any) => {
+                    return (item.cole_nombre_establecimiento || item.COLE_NOMBRE_ESTABLECIMIENTO) !== option;
+                });
+                mergedData = [...otherData, ...formattedNewData];
             } else {
                 // Remove entire year prefix
                 const otherData = currentData.filter((item: any) => !String(item.PERIODO || item.periodo).startsWith(String(year)));
@@ -99,6 +128,7 @@ export default function ChartContainer({
             }
 
             await dbService.putData('apiResponse', mergedData);
+            updateBolivarSchools(mergedData);
             reprocessData(mergedData);
 
         } catch (error) {
@@ -133,25 +163,27 @@ export default function ChartContainer({
             setProcessedData(processBolivarVsNationalAreas(data));
         } else if (chartInfo.chartId === 12) {
             setProcessedData(processBolivarVsNationalGlobal(data));
+        } else if (chartInfo.chartId === 13) {
+            setProcessedData(processEvolutionGlobal(data));
+        } else if (chartInfo.chartId === 14) {
+            setProcessedData(processEvolutionAreas(data));
+        } else if (chartInfo.chartId === 15) {
+            setProcessedData(processByGender(data));
         } else {
             setProcessedData(processByNaturaleza(data));
         }
     };
 
     const chartOptions = useMemo(() => {
-        if ([3, 4, 5, 6].includes(chartInfo.chartId)) {
-            const uniqueNames = Array.from(new Set(processedData
-                .map(item => item.name)
-                .filter(name => name !== 'PROMEDIO BOLIVAR' && name !== 'PROMEDIO COLOMBIA')
-            ));
-            return uniqueNames.sort();
+        if ([3, 4, 5, 6, 13, 14].includes(chartInfo.chartId)) {
+            return bolivarSchools;
         }
         if ([7, 8, 9, 10].includes(chartInfo.chartId)) {
              const uniqueCategories = Array.from(new Set(processedData.map(item => item.name)));
              return uniqueCategories.sort();
         }
         return ['OFICIAL', 'NO OFICIAL'];
-    }, [chartInfo.chartId, processedData]);
+    }, [chartInfo.chartId, bolivarSchools, processedData]);
 
     if (!processedData.length) {
         return <div>Loading...</div>;
@@ -237,6 +269,24 @@ export default function ChartContainer({
                         isGlobal={true}
                         isHorizontal={true}
                         onYearChange={handleSelectionChange}
+                    />
+                ) : chartInfo.chartId === 13 ? (
+                    <LineChartSelect 
+                        data={processedData} 
+                        options={chartOptions} 
+                        isGlobal={true}
+                        onOptionSelect={handleSelectionChange}
+                    />
+                ) : chartInfo.chartId === 14 ? (
+                    <LineChartSelect 
+                        data={processedData} 
+                        options={chartOptions} 
+                        onOptionSelect={handleSelectionChange}
+                    />
+                ) : chartInfo.chartId === 15 ? (
+                    <PieChart 
+                        data={processedData} 
+                        onYearChange={(opt, year) => handleYearChangeGeneral(year)} 
                     />
                 ) : (
                     <BarChartSelect 

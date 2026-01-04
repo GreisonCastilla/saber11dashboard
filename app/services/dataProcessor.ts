@@ -772,3 +772,159 @@ export const processBolivarVsNationalGlobal = (data: any[]): any[] => {
         PERIODO: group.periodo
     }));
 };
+
+export const processEvolutionGlobal = (data: any[]): any[] => {
+    const groups: {
+        [key: string]: {
+            sum: number,
+            count: number,
+            periodo: string,
+            name: string
+        }
+    } = {};
+
+    if (!data || !Array.isArray(data)) return [];
+
+    data.forEach(item => {
+        const rawPeriodo = String(item.periodo || item.PERIODO || '');
+        if (rawPeriodo.length < 4) return;
+        const periodo = rawPeriodo.length === 5 ? rawPeriodo.slice(0, -1) : rawPeriodo;
+        const name = item.cole_nombre_establecimiento || item.COLE_NOMBRE_ESTABLECIMIENTO || 'UNKNOWN';
+
+        const key = `${name}-${periodo}`;
+
+        if (!groups[key]) {
+            groups[key] = {
+                sum: 0,
+                count: 0,
+                periodo,
+                name
+            };
+        }
+
+        const val = parseFloat(item.punt_global) || parseFloat(item.PUNT_GLOBAL) || 0;
+        groups[key].sum += val;
+        groups[key].count++;
+    });
+
+    return Object.values(groups)
+        .sort((a, b) => a.periodo.localeCompare(b.periodo))
+        .map(group => ({
+            name: group.name,
+            avgGlobal: parseFloat((group.sum / group.count).toFixed(2)),
+            PERIODO: group.periodo
+        }));
+};
+
+export const processEvolutionAreas = (data: any[]): ProcessedData[] => {
+    const groups: {
+        [key: string]: {
+            sum: { [key: string]: number },
+            count: number,
+            periodo: string,
+            name: string
+        }
+    } = {};
+
+    const subjects = [
+        'PUNT_INGLES',
+        'PUNT_MATEMATICAS',
+        'PUNT_SOCIALES_CIUDADANAS',
+        'PUNT_C_NATURALES',
+        'PUNT_LECTURA_CRITICA'
+    ];
+
+    if (!data || !Array.isArray(data)) return [];
+
+    data.forEach(item => {
+        const rawPeriodo = String(item.periodo || item.PERIODO || '');
+        if (rawPeriodo.length < 4) return;
+        const periodo = rawPeriodo.length === 5 ? rawPeriodo.slice(0, -1) : rawPeriodo;
+        const name = item.cole_nombre_establecimiento || item.COLE_NOMBRE_ESTABLECIMIENTO || 'UNKNOWN';
+
+        const key = `${name}-${periodo}`;
+
+        if (!groups[key]) {
+            groups[key] = {
+                sum: {
+                    PUNT_INGLES: 0,
+                    PUNT_MATEMATICAS: 0,
+                    PUNT_SOCIALES_CIUDADANAS: 0,
+                    PUNT_C_NATURALES: 0,
+                    PUNT_LECTURA_CRITICA: 0
+                },
+                count: 0,
+                periodo,
+                name
+            };
+        }
+
+        groups[key].count++;
+        subjects.forEach(sub => {
+            const val = parseFloat(item[sub.toLowerCase()]) || parseFloat(item[sub]) || 0;
+            groups[key].sum[sub] += val;
+        });
+    });
+
+    return Object.values(groups)
+        .sort((a, b) => a.periodo.localeCompare(b.periodo))
+        .map(group => {
+            const averages = subjects.map(sub => {
+                return parseFloat((group.sum[sub] / group.count).toFixed(2));
+            });
+
+            return {
+                name: group.name,
+                label: [
+                    'Ingles',
+                    'Matematicas',
+                    'Sociales',
+                    'Ciencias naturales',
+                    'Lectura critica'
+                ],
+                datos: averages,
+                PERIODO: group.periodo
+            };
+        });
+};
+
+export const processByGender = (data: any[]): any[] => {
+    const groups: {
+        [key: string]: {
+            counts: { [key: string]: number },
+            total: number,
+            periodo: string
+        }
+    } = {};
+
+    if (!data || !Array.isArray(data)) return [];
+
+    data.forEach(item => {
+        const rawPeriodo = String(item.periodo || item.PERIODO || '');
+        if (rawPeriodo.length < 4) return;
+        const periodo = rawPeriodo.length === 5 ? rawPeriodo.slice(0, -1) : rawPeriodo;
+
+        const genero = (item.estu_genero || item.ESTU_GENERO || 'NO INFORMA').toUpperCase();
+
+        if (!groups[periodo]) {
+            groups[periodo] = {
+                counts: {},
+                total: 0,
+                periodo
+            };
+        }
+
+        groups[periodo].counts[genero] = (groups[periodo].counts[genero] || 0) + 1;
+        groups[periodo].total++;
+    });
+
+    return Object.values(groups).map(group => ({
+        name: "Género",
+        data: Object.entries(group.counts).map(([label, count]) => ({
+            label,
+            count,
+            percentage: parseFloat(((count / group.total) * 100).toFixed(2))
+        })),
+        PERIODO: group.periodo
+    }));
+};

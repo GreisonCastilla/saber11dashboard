@@ -154,7 +154,7 @@ export default function BarChartCategories({ data, isGlobal = false, isHorizonta
 
                     <div className="flex flex-col flex-[2] min-w-[200px]">
                         <div className="flex justify-between items-center mb-1">
-                             <label htmlFor="cat-year-slider" className="text-xs text-gray-500 font-medium uppercase">Year</label>
+                             <label htmlFor="cat-year-slider" className="text-xs text-gray-500 font-medium uppercase">año</label>
                              <span className="text-sm font-bold text-primary">{selectedYear}</span>
                         </div>
                         <input

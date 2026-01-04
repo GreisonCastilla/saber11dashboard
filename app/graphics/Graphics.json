@@ -41,12 +41,12 @@
   },
   {
     "id": 9,
-    "name": "Educación padre por promedio global",
+    "name": "Educación padre por promedio global x",
     "typeChart": "bar"
   },
   {
     "id": 10,
-    "name": "Educación madre por promedio global",
+    "name": "Educación madre por promedio global x",
     "typeChart": "bar"
   },
   {
@@ -68,5 +68,40 @@
     "id": 14,
     "name": "Evolución áreas Colegio X",
     "typeChart": "line"
+  },
+  {
+    "id": 15,
+    "name": "Género",
+    "typeChart": "pie"
+  },
+  {
+    "id": 16,
+    "name": "Promedio matemática Bolívar ultimo año",
+    "typeChart": "info"
+  },
+  {
+    "id": 17,
+    "name": "Promedio inglés Bolívar ultimo año",
+    "typeChart": "info"
+  },
+  {
+    "id": 18,
+    "name": "Promedio sociales y ciudadanía Bolívar ultimo año",
+    "typeChart": "info"
+  },
+  {
+    "id": 19,
+    "name": "Promedio ciencias naturales Bolívar ultimo año",
+    "typeChart": "info"
+  },
+  {
+    "id": 20,
+    "name": "Promedio lectura critica Bolívar ultimo año",
+    "typeChart": "info"
+  },
+  {
+    "id": 21,
+    "name": "Promedio global Bolívar ultimo año",
+    "typeChart": "info"
   }
 ]

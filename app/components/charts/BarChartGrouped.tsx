@@ -113,7 +113,7 @@ export default function BarChartGrouped({ data, onYearChange }: BarChartGroupedP
                 {/* Years only, no option selector */}
                 <div className="flex flex-col w-full">
                     <div className="flex justify-between items-center mb-1">
-                            <label htmlFor="year-slider-grouped" className="text-xs text-gray-500 font-medium uppercase">Year</label>
+                            <label htmlFor="year-slider-grouped" className="text-xs text-gray-500 font-medium uppercase">año</label>
                             <span className="text-sm font-bold text-primary">{selectedYear}</span>
                     </div>
                     <input

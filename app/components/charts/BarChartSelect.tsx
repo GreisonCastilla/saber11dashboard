@@ -123,20 +123,20 @@ export default function BarChartSelect({ data, options, comparisonItemName, onOp
                 <div className="flex flex-wrap items-end gap-6">
                     {/* Option Select */}
                     <SearchableSelect
-                        label="Metric"
+                        label="Colegio"
                         options={options}
                         value={selectedOption}
                         onChange={(value) => {
                             setSelectedOption(value);
                             if (onOptionSelect) onOptionSelect(value, selectedYear);
                         }}
-                        placeholder="Select metric..."
+                        placeholder="Seleccionar colegio..."
                     />
 
                     {/* Year Slider */}
                     <div className="flex flex-col flex-[2] min-w-[200px]">
                         <div className="flex justify-between items-center mb-1">
-                             <label htmlFor="year-slider" className="text-xs text-gray-500 font-medium uppercase">Year</label>
+                             <label htmlFor="year-slider" className="text-xs text-gray-500 font-medium uppercase">Año</label>
                              <span className="text-sm font-bold text-primary">{selectedYear}</span>
                         </div>
                         <input

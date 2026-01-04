@@ -125,13 +125,13 @@ export default function BarChartHorizontalSelector({ data, options, comparisonIt
                             setSelectedOption(value);
                             if (onOptionSelect) onOptionSelect(value, selectedYear);
                         }}
-                        placeholder="Search school..."
+                        placeholder="Buscar colegio..."
                     />
 
                     {/* Year Slider */}
                     <div className="flex flex-col flex-[2] min-w-[200px]">
                         <div className="flex justify-between items-center mb-1">
-                                <label htmlFor="h-year-slider" className="text-xs text-gray-500 font-medium uppercase">Year</label>
+                                <label htmlFor="h-year-slider" className="text-xs text-gray-500 font-medium uppercase">Año</label>
                                 <span className="text-sm font-bold text-primary">{selectedYear}</span>
                         </div>
                         <input
