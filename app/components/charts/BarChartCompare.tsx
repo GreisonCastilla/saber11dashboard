@@ -46,19 +46,22 @@ export default function BarChartCompare({ data }: BarChartCompareProps) {
         // We expect official and non-official items
         const oficialItem = currentItems.find(i => i.name === 'OFICIAL');
         const noOficialItem = currentItems.find(i => i.name === 'NO OFICIAL');
+        const totalItem = currentItems.find(i => i.name === 'TOTAL');
 
         const oficialVal = oficialItem ? oficialItem.avgGlobal : 0;
         const noOficialVal = noOficialItem ? noOficialItem.avgGlobal : 0;
+        const totalVal = totalItem ? totalItem.avgGlobal : 0;
 
         return {
-            labels: ['OFICIAL', 'NO OFICIAL'],
+            labels: ['OFICIAL', 'NO OFICIAL', 'TOTAL'],
             datasets: [
                 {
                     label: 'Promedio Global',
-                    data: [oficialVal, noOficialVal],
+                    data: [oficialVal, noOficialVal, totalVal],
                     backgroundColor: [
                         'rgba(53, 162, 235, 0.5)', // Blue for Oficial
                         'rgba(255, 99, 132, 0.5)', // Red for No Oficial
+                        'rgba(153, 102, 255, 0.5)', // Purple for Total
                     ],
                 },
             ],

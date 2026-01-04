@@ -105,8 +105,10 @@ export const processGlobalScoreByNaturaleza = (data: any[]): any[] => {
         const naturaleza = item.cole_naturaleza;
         if (!naturaleza) return;
 
-        const key = `${naturaleza}-${periodo}`;
+        const val = parseFloat(item.punt_global) || parseFloat(item.PUNT_GLOBAL) || 0;
 
+        // Group by Naturaleza
+        const key = `${naturaleza}-${periodo}`;
         if (!groups[key]) {
             groups[key] = {
                 sum: 0,
@@ -115,10 +117,21 @@ export const processGlobalScoreByNaturaleza = (data: any[]): any[] => {
                 periodo
             };
         }
-
-        const val = parseFloat(item.punt_global) || parseFloat(item.PUNT_GLOBAL) || 0;
         groups[key].sum += val;
         groups[key].count++;
+
+        // Group by Total (All natures)
+        const totalKey = `TOTAL-${periodo}`;
+        if (!groups[totalKey]) {
+            groups[totalKey] = {
+                sum: 0,
+                count: 0,
+                naturaleza: 'TOTAL',
+                periodo
+            };
+        }
+        groups[totalKey].sum += val;
+        groups[totalKey].count++;
     });
 
     return Object.values(groups).map(group => ({
