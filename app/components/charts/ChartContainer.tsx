@@ -5,6 +5,7 @@ import { dbService } from "../../services/indexedDB";
 import { processByNaturaleza, processGlobalScoreByNaturaleza, processByEstablecimiento } from "../../services/dataProcessor";
 import BarChartSelect from "./BarChartSelect";
 import BarChartCompare from "./BarChartCompare";
+import BarChartGrouped from "./BarChartGrouped";
 
 export default function ChartContainer({
      chartInfo
@@ -31,6 +32,7 @@ export default function ChartContainer({
                     } else if (chartInfo.chartId === 3) {
                         setProcessedData(processByEstablecimiento(parsedData));
                     } else {
+                        // Chart 1 and others use this default processing
                         setProcessedData(processByNaturaleza(parsedData));
                     }
                 }
@@ -79,7 +81,9 @@ export default function ChartContainer({
                 </button>
         </div>  
             <div className="flex-1 min-h-0">
-                {chartInfo.chartId === 2 ? (
+                {chartInfo.chartId === 1 ? (
+                    <BarChartGrouped data={processedData} />
+                ) : chartInfo.chartId === 2 ? (
                     <BarChartCompare data={processedData} />
                 ) : chartInfo.chartId === 3 ? (
                     <BarChartSelect 
