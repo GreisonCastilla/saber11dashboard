@@ -61,8 +61,12 @@ export default function BarChartGrouped({ data, onYearChange }: BarChartGroupedP
 
         const datasets = currentItems.map(item => {
             let color = 'rgba(128, 128, 128, 0.5)'; // Default grey
-            if (item.name === 'OFICIAL') color = 'rgba(53, 162, 235, 0.5)'; // Blue
-            else if (item.name === 'NO OFICIAL') color = 'rgba(255, 99, 132, 0.5)'; // Red
+            const upperName = item.name.toUpperCase();
+            if (upperName === 'OFICIAL' || upperName === 'PROMEDIO BOLIVAR') {
+                color = 'rgba(53, 162, 235, 0.5)'; // Blue
+            } else if (upperName === 'NO OFICIAL' || upperName === 'PROMEDIO COLOMBIA') {
+                color = 'rgba(255, 99, 132, 0.5)'; // Red
+            }
             
             return {
                 label: item.name,

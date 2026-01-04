@@ -33,10 +33,11 @@ interface CategoryDataItem {
 interface BarChartCategoriesProps {
     data: CategoryDataItem[];
     isGlobal?: boolean;
+    isHorizontal?: boolean;
     onYearChange?: (option: string, year: number) => void;
 }
 
-export default function BarChartCategories({ data, isGlobal = false, onYearChange }: BarChartCategoriesProps) {
+export default function BarChartCategories({ data, isGlobal = false, isHorizontal = false, onYearChange }: BarChartCategoriesProps) {
     const [selectedYear, setSelectedYear] = useState<number>(2014);
     const [selectedAreaIndex, setSelectedAreaIndex] = useState<number>(0);
 
@@ -108,6 +109,7 @@ export default function BarChartCategories({ data, isGlobal = false, onYearChang
     }, [currentItems, isGlobal, selectedAreaIndex, areas]);
 
     const chartOptions = {
+        indexAxis: isHorizontal ? 'y' as const : 'x' as const,
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -120,6 +122,9 @@ export default function BarChartCategories({ data, isGlobal = false, onYearChang
             },
         },
         scales: {
+            x: {
+                beginAtZero: true
+            },
             y: {
                 beginAtZero: true
             }

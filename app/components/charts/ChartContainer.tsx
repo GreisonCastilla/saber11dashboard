@@ -13,7 +13,9 @@ import {
     processByEstrato,
     processGlobalScoreByEstrato,
     processGlobalScoreByEducationPadre,
-    processGlobalScoreByEducationMadre
+    processGlobalScoreByEducationMadre,
+    processBolivarVsNationalAreas,
+    processBolivarVsNationalGlobal
 } from "../../services/dataProcessor";
 import BarChartSelect from "./BarChartSelect";
 import BarChartCompare from "./BarChartCompare";
@@ -127,6 +129,10 @@ export default function ChartContainer({
             setProcessedData(processGlobalScoreByEducationPadre(data));
         } else if (chartInfo.chartId === 10) {
             setProcessedData(processGlobalScoreByEducationMadre(data));
+        } else if (chartInfo.chartId === 11) {
+            setProcessedData(processBolivarVsNationalAreas(data));
+        } else if (chartInfo.chartId === 12) {
+            setProcessedData(processBolivarVsNationalGlobal(data));
         } else {
             setProcessedData(processByNaturaleza(data));
         }
@@ -218,6 +224,18 @@ export default function ChartContainer({
                     <BarChartCategories 
                         data={processedData} 
                         isGlobal={true}
+                        onYearChange={handleSelectionChange}
+                    />
+                ) : chartInfo.chartId === 11 ? (
+                    <BarChartGrouped 
+                        data={processedData} 
+                        onYearChange={handleYearChangeGeneral} 
+                    />
+                ) : chartInfo.chartId === 12 ? (
+                    <BarChartCategories 
+                        data={processedData} 
+                        isGlobal={true}
+                        isHorizontal={true}
                         onYearChange={handleSelectionChange}
                     />
                 ) : (
