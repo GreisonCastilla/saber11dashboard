@@ -33,10 +33,11 @@ interface BarChartSelectProps {
     data: DataItem[];
     options: string[]; // Corresponds to 'name' in DataItem
     comparisonItemName?: string; // e.g., 'PROMEDIO BOLIVAR'
-    onOptionSelect?: (option: string) => void;
+    onOptionSelect?: (option: string, year: number) => void;
+    onYearChange?: (option: string, year: number) => void;
 }
 
-export default function BarChartSelect({ data, options, comparisonItemName, onOptionSelect }: BarChartSelectProps) {
+export default function BarChartSelect({ data, options, comparisonItemName, onOptionSelect, onYearChange }: BarChartSelectProps) {
     // State for selections
     const [selectedYear, setSelectedYear] = useState<number>(2014);
     const [selectedOption, setSelectedOption] = useState<string>(options[0] || '');
@@ -127,7 +128,7 @@ export default function BarChartSelect({ data, options, comparisonItemName, onOp
                         value={selectedOption}
                         onChange={(value) => {
                             setSelectedOption(value);
-                            if (onOptionSelect) onOptionSelect(value);
+                            if (onOptionSelect) onOptionSelect(value, selectedYear);
                         }}
                         placeholder="Select metric..."
                     />
@@ -145,7 +146,11 @@ export default function BarChartSelect({ data, options, comparisonItemName, onOp
                             max="2022"
                             step="1"
                             value={selectedYear}
-                            onChange={(e) => setSelectedYear(Number(e.target.value))}
+                            onChange={(e) => {
+                                const year = Number(e.target.value);
+                                setSelectedYear(year);
+                                if (onYearChange) onYearChange(selectedOption, year);
+                            }}
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
                         />
                         <div className="flex justify-between text-[10px] text-gray-400 mt-1">

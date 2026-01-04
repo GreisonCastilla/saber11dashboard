@@ -29,9 +29,10 @@ interface CompareDataItem {
 
 interface BarChartCompareProps {
     data: CompareDataItem[];
+    onYearChange?: (year: number) => void;
 }
 
-export default function BarChartCompare({ data }: BarChartCompareProps) {
+export default function BarChartCompare({ data, onYearChange }: BarChartCompareProps) {
     // State for selections
     const [selectedYear, setSelectedYear] = useState<number>(2014);
 
@@ -108,7 +109,11 @@ export default function BarChartCompare({ data }: BarChartCompareProps) {
                         max="2022"
                         step="1"
                         value={selectedYear}
-                        onChange={(e) => setSelectedYear(Number(e.target.value))}
+                        onChange={(e) => {
+                            const year = Number(e.target.value);
+                            setSelectedYear(year);
+                            if (onYearChange) onYearChange(year);
+                        }}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
                     />
                     <div className="flex justify-between text-[10px] text-gray-400 mt-1">

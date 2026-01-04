@@ -32,10 +32,11 @@ interface BarChartHorizontalSelectorProps {
     data: DataItem[];
     options: string[];
     comparisonItemName?: string;
-    onOptionSelect?: (option: string) => void;
+    onOptionSelect?: (option: string, year: number) => void;
+    onYearChange?: (option: string, year: number) => void;
 }
 
-export default function BarChartHorizontalSelector({ data, options, comparisonItemName, onOptionSelect }: BarChartHorizontalSelectorProps) {
+export default function BarChartHorizontalSelector({ data, options, comparisonItemName, onOptionSelect, onYearChange }: BarChartHorizontalSelectorProps) {
     // State
     const [selectedYear, setSelectedYear] = useState<number>(2014);
     const [selectedOption, setSelectedOption] = useState<string>(options[0] || '');
@@ -122,7 +123,7 @@ export default function BarChartHorizontalSelector({ data, options, comparisonIt
                         value={selectedOption}
                         onChange={(value) => {
                             setSelectedOption(value);
-                            if (onOptionSelect) onOptionSelect(value);
+                            if (onOptionSelect) onOptionSelect(value, selectedYear);
                         }}
                         placeholder="Search school..."
                     />
@@ -137,15 +138,19 @@ export default function BarChartHorizontalSelector({ data, options, comparisonIt
                             id="h-year-slider"
                             type="range"
                             min="2014"
-                            max="2025"
+                            max="2022"
                             step="1"
                             value={selectedYear}
-                            onChange={(e) => setSelectedYear(Number(e.target.value))}
+                            onChange={(e) => {
+                                const year = Number(e.target.value);
+                                setSelectedYear(year);
+                                if (onYearChange) onYearChange(selectedOption, year);
+                            }}
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
                         />
                         <div className="flex justify-between text-[10px] text-gray-400 mt-1">
                             <span>2014</span>
-                            <span>2025</span>
+                            <span>2022</span>
                         </div>
                     </div>
                 </div>

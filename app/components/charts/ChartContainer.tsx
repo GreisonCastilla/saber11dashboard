@@ -9,12 +9,15 @@ import {
     processByEstablecimiento, 
     processGlobalScoreByEstablecimiento,
     processByEstablecimientoNational,
-    processGlobalScoreByEstablecimientoNational
+    processGlobalScoreByEstablecimientoNational,
+    processByEstrato,
+    processGlobalScoreByEstrato
 } from "../../services/dataProcessor";
 import BarChartSelect from "./BarChartSelect";
 import BarChartCompare from "./BarChartCompare";
 import BarChartGrouped from "./BarChartGrouped";
 import BarChartHorizontalSelector from "./BarChartHorizontalSelector";
+import BarChartCategories from "./BarChartCategories";
 
 export default function ChartContainer({
      chartInfo
@@ -35,21 +38,7 @@ export default function ChartContainer({
                 const rawData = await dbService.getData('apiResponse');
                 if (rawData) {
                     const parsedData = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-                    
-                    if (chartInfo.chartId === 2) {
-                        setProcessedData(processGlobalScoreByNaturaleza(parsedData));
-                    } else if (chartInfo.chartId === 3) {
-                        setProcessedData(processByEstablecimiento(parsedData));
-                    } else if (chartInfo.chartId === 4) {
-                        setProcessedData(processGlobalScoreByEstablecimiento(parsedData));
-                    } else if (chartInfo.chartId === 5) {
-                        setProcessedData(processByEstablecimientoNational(parsedData));
-                    } else if (chartInfo.chartId === 6) {
-                        setProcessedData(processGlobalScoreByEstablecimientoNational(parsedData));
-                    } else {
-                        // Chart 1 and others use this default processing
-                        setProcessedData(processByNaturaleza(parsedData));
-                    }
+                    reprocessData(parsedData);
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -58,26 +47,30 @@ export default function ChartContainer({
         fetchData();
     }, [chartInfo.instanceId, chartInfo.chartId]);
 
-    const handleOptionSelect = async (option: string) => {
-        if (![3, 4, 5, 6].includes(chartInfo.chartId)) return;
-
+    const handleSelectionChange = async (option: string, year: number) => {
         try {
-            console.log(`Fetching data for ${option}...`);
-            const newDataString = await fetchDatos(`SELECT * WHERE COLE_NOMBRE_ESTABLECIMIENTO = '${option}'`);
-            
+            let query = "";
+            if ([3, 4, 5, 6].includes(chartInfo.chartId)) {
+                console.log(`Fetching targeted data for ${option} in ${year}...`);
+                query = `SELECT * WHERE COLE_NOMBRE_ESTABLECIMIENTO = '${option}' AND PERIODO LIKE '${year}%'`;
+            } else {
+                 console.log(`Fetching general data for year ${year}...`);
+                 query = `SELECT * WHERE PERIODO LIKE '${year}%'`;
+            }
+
+            const newDataString = await fetchDatos(query);
             if (!newDataString) return;
 
             const newData = JSON.parse(newDataString);
-            
             const formattedNewData = newData.map((item: any) => ({
                  ...item,
                   PERIODO: Number(item.PERIODO),
                   PUNT_MATEMATICAS: Number(item.PUNT_MATEMATICAS),
-                  PUNT_INGLES: Number(item.PUNT_INGLES),
-                  PUNT_SOCIALES_CIUDADANAS: Number(item.PUNT_SOCIALES_CIUDADANAS),
-                  PUNT_C_NATURALES: Number(item.PUNT_C_NATURALES),
-                  PUNT_LECTURA_CRITICA: Number(item.PUNT_LECTURA_CRITICA),
-                  PUNT_GLOBAL: Number(item.PUNT_GLOBAL),
+                  PUNT_INGLES: Number(item.PUNT_INGLES) || Number(item.punt_ingles),
+                  PUNT_SOCIALES_CIUDADANAS: Number(item.PUNT_SOCIALES_CIUDADANAS) || Number(item.punt_sociales_ciudadanas),
+                  PUNT_C_NATURALES: Number(item.PUNT_C_NATURALES) || Number(item.punt_c_naturales),
+                  PUNT_LECTURA_CRITICA: Number(item.PUNT_LECTURA_CRITICA) || Number(item.punt_lectura_critica),
+                  PUNT_GLOBAL: Number(item.PUNT_GLOBAL) || Number(item.punt_global),
             }));
 
             const currentDataRaw = await dbService.getData('apiResponse');
@@ -86,43 +79,64 @@ export default function ChartContainer({
                  currentData = typeof currentDataRaw === 'string' ? JSON.parse(currentDataRaw) : currentDataRaw;
             }
 
-            // Filter out existing entries for this establishment to avoid duplicates before merging (optional strategy)
-            // Or just merge. Assuming we want to ensure we have data for this school.
-            // Simple merge might duplicate if it already exists, effectively it's ok as map usually handles processing. 
-            // Better to filter to be safe.
-            const otherData = currentData.filter((item: any) => item.cole_nombre_establecimiento !== option && item.COLE_NOMBRE_ESTABLECIMIENTO !== option);
-            const mergedData = [...otherData, ...formattedNewData];
-
-            await dbService.putData('apiResponse', mergedData);
-            
-            // Re-process data based on chart type
-             if (chartInfo.chartId === 2) {
-                setProcessedData(processGlobalScoreByNaturaleza(mergedData));
-            } else if (chartInfo.chartId === 3) {
-                setProcessedData(processByEstablecimiento(mergedData));
-            } else if (chartInfo.chartId === 4) {
-                setProcessedData(processGlobalScoreByEstablecimiento(mergedData));
-            } else if (chartInfo.chartId === 5) {
-                setProcessedData(processByEstablecimientoNational(mergedData));
-            } else if (chartInfo.chartId === 6) {
-                setProcessedData(processGlobalScoreByEstablecimientoNational(mergedData));
+            let mergedData = [];
+            if ([3, 4, 5, 6].includes(chartInfo.chartId) && option) {
+                // Remove only this school-year combination
+                const otherData = currentData.filter((item: any) => {
+                    const matchesSchool = (item.cole_nombre_establecimiento || item.COLE_NOMBRE_ESTABLECIMIENTO) === option;
+                    const matchesYear = String(item.PERIODO || item.periodo).startsWith(String(year));
+                    return !(matchesSchool && matchesYear);
+                });
+                mergedData = [...otherData, ...formattedNewData];
             } else {
-                setProcessedData(processByNaturaleza(mergedData));
+                // Remove entire year prefix
+                const otherData = currentData.filter((item: any) => !String(item.PERIODO || item.periodo).startsWith(String(year)));
+                mergedData = [...otherData, ...formattedNewData];
             }
 
+            await dbService.putData('apiResponse', mergedData);
+            reprocessData(mergedData);
+
         } catch (error) {
-            console.error("Error fetching on-demand data:", error);
+            console.error("Error in handleSelectionChange:", error);
+        }
+    };
+
+    const handleYearChangeGeneral = (year: number) => {
+        handleSelectionChange("", year);
+    };
+
+    const reprocessData = (data: any[]) => {
+        if (chartInfo.chartId === 2) {
+            setProcessedData(processGlobalScoreByNaturaleza(data));
+        } else if (chartInfo.chartId === 3) {
+            setProcessedData(processByEstablecimiento(data));
+        } else if (chartInfo.chartId === 4) {
+            setProcessedData(processGlobalScoreByEstablecimiento(data));
+        } else if (chartInfo.chartId === 5) {
+            setProcessedData(processByEstablecimientoNational(data));
+        } else if (chartInfo.chartId === 6) {
+            setProcessedData(processGlobalScoreByEstablecimientoNational(data));
+        } else if (chartInfo.chartId === 7) {
+            setProcessedData(processByEstrato(data));
+        } else if (chartInfo.chartId === 8) {
+            setProcessedData(processGlobalScoreByEstrato(data));
+        } else {
+            setProcessedData(processByNaturaleza(data));
         }
     };
 
     const chartOptions = useMemo(() => {
         if ([3, 4, 5, 6].includes(chartInfo.chartId)) {
-            // Extract unique names from processedData for options, excluding the comparison items
             const uniqueNames = Array.from(new Set(processedData
                 .map(item => item.name)
                 .filter(name => name !== 'PROMEDIO BOLIVAR' && name !== 'PROMEDIO COLOMBIA')
             ));
             return uniqueNames.sort();
+        }
+        if ([7, 8].includes(chartInfo.chartId)) {
+             const uniqueEstratos = Array.from(new Set(processedData.map(item => item.name)));
+             return uniqueEstratos.sort();
         }
         return ['OFICIAL', 'NO OFICIAL'];
     }, [chartInfo.chartId, processedData]);
@@ -154,39 +168,58 @@ export default function ChartContainer({
         </div>  
             <div className="flex-1 min-h-0">
                 {chartInfo.chartId === 1 ? (
-                    <BarChartGrouped data={processedData} />
+                    <BarChartGrouped data={processedData} onYearChange={handleYearChangeGeneral} />
                 ) : chartInfo.chartId === 2 ? (
-                    <BarChartCompare data={processedData} />
+                    <BarChartCompare data={processedData} onYearChange={handleYearChangeGeneral} />
                 ) : chartInfo.chartId === 3 ? (
                     <BarChartSelect 
                         data={processedData} 
                         options={chartOptions} 
                         comparisonItemName="PROMEDIO BOLIVAR"
-                        onOptionSelect={handleOptionSelect}
+                        onOptionSelect={handleSelectionChange}
+                        onYearChange={handleSelectionChange}
                     />
                 ) : chartInfo.chartId === 4 ? (
                     <BarChartHorizontalSelector 
                         data={processedData} 
                         options={chartOptions} 
                         comparisonItemName="PROMEDIO BOLIVAR"
-                         onOptionSelect={handleOptionSelect}
+                        onOptionSelect={handleSelectionChange}
+                        onYearChange={handleSelectionChange}
                     />
                 ) : chartInfo.chartId === 5 ? (
                     <BarChartSelect 
                         data={processedData} 
                         options={chartOptions} 
                         comparisonItemName="PROMEDIO COLOMBIA"
-                         onOptionSelect={handleOptionSelect}
+                        onOptionSelect={handleSelectionChange}
+                        onYearChange={handleSelectionChange}
                     />
                 ) : chartInfo.chartId === 6 ? (
                     <BarChartHorizontalSelector 
                         data={processedData} 
                         options={chartOptions} 
                         comparisonItemName="PROMEDIO COLOMBIA"
-                         onOptionSelect={handleOptionSelect}
+                        onOptionSelect={handleSelectionChange}
+                        onYearChange={handleSelectionChange}
+                    />
+                ) : chartInfo.chartId === 7 ? (
+                    <BarChartCategories 
+                        data={processedData} 
+                        onYearChange={handleSelectionChange}
+                    />
+                ) : chartInfo.chartId === 8 ? (
+                    <BarChartCategories 
+                        data={processedData} 
+                        isGlobal={true}
+                        onYearChange={handleSelectionChange}
                     />
                 ) : (
-                    <BarChartSelect data={processedData} options={chartOptions} />
+                    <BarChartSelect 
+                        data={processedData} 
+                        options={chartOptions} 
+                        onYearChange={handleSelectionChange}
+                    />
                 )}
             </div>
         </div>

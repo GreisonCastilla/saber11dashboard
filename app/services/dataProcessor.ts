@@ -457,3 +457,116 @@ export const processGlobalScoreByEstablecimientoNational = (data: any[]): any[] 
         PERIODO: group.periodo
     }));
 };
+export const processByEstrato = (data: any[]): ProcessedData[] => {
+    const groups: {
+        [key: string]: {
+            sum: { [key: string]: number },
+            count: number,
+            estrato: string,
+            periodo: string
+        }
+    } = {};
+
+    const subjects = [
+        'PUNT_INGLES',
+        'PUNT_MATEMATICAS',
+        'PUNT_SOCIALES_CIUDADANAS',
+        'PUNT_C_NATURALES',
+        'PUNT_LECTURA_CRITICA'
+    ];
+
+    if (!data || !Array.isArray(data)) return [];
+
+    data.forEach(item => {
+        const rawPeriodo = String(item.periodo || item.PERIODO || '');
+        if (rawPeriodo.length < 4) return;
+        const periodo = rawPeriodo.length === 5 ? rawPeriodo.slice(0, -1) : rawPeriodo;
+
+        const estrato = item.fami_estratovivienda || item.FAMI_ESTRATOVIVIENDA || 'SIN ESPECIFICAR';
+
+        const key = `${estrato}-${periodo}`;
+
+        if (!groups[key]) {
+            groups[key] = {
+                sum: {
+                    PUNT_INGLES: 0,
+                    PUNT_MATEMATICAS: 0,
+                    PUNT_SOCIALES_CIUDADANAS: 0,
+                    PUNT_C_NATURALES: 0,
+                    PUNT_LECTURA_CRITICA: 0
+                },
+                count: 0,
+                estrato,
+                periodo
+            };
+        }
+
+        groups[key].count++;
+
+        subjects.forEach(sub => {
+            const val = parseFloat(item[sub.toLowerCase()]) || parseFloat(item[sub]) || 0;
+            groups[key].sum[sub] += val;
+        });
+    });
+
+    return Object.values(groups).map(group => {
+        const averages = subjects.map(sub => {
+            return parseFloat((group.sum[sub] / group.count).toFixed(2));
+        });
+
+        return {
+            name: group.estrato,
+            label: [
+                'Ingles',
+                'Matematicas',
+                'Sociales',
+                'Ciencias naturales',
+                'Lectura critica'
+            ],
+            datos: averages,
+            PERIODO: group.periodo
+        };
+    });
+};
+
+export const processGlobalScoreByEstrato = (data: any[]): any[] => {
+    const groups: {
+        [key: string]: {
+            sum: number,
+            count: number,
+            estrato: string,
+            periodo: string
+        }
+    } = {};
+
+    if (!data || !Array.isArray(data)) return [];
+
+    data.forEach(item => {
+        const rawPeriodo = String(item.periodo || item.PERIODO || '');
+        if (rawPeriodo.length < 4) return;
+        const periodo = rawPeriodo.length === 5 ? rawPeriodo.slice(0, -1) : rawPeriodo;
+
+        const estrato = item.fami_estratovivienda || item.FAMI_ESTRATOVIVIENDA || 'SIN ESPECIFICAR';
+
+        const key = `${estrato}-${periodo}`;
+
+        if (!groups[key]) {
+            groups[key] = {
+                sum: 0,
+                count: 0,
+                estrato,
+                periodo
+            };
+        }
+
+        const val = parseFloat(item.punt_global) || parseFloat(item.PUNT_GLOBAL) || 0;
+        groups[key].sum += val;
+        groups[key].count++;
+    });
+
+    return Object.values(groups).map(group => ({
+        name: group.estrato,
+        avgGlobal: parseFloat((group.sum / group.count).toFixed(2)),
+        PERIODO: group.periodo
+    }));
+};
