@@ -140,3 +140,100 @@ export const processGlobalScoreByNaturaleza = (data: any[]): any[] => {
         PERIODO: group.periodo
     }));
 };
+
+export const processByEstablecimiento = (data: any[]): ProcessedData[] => {
+    const groups: {
+        [key: string]: {
+            sum: { [key: string]: number },
+            count: number,
+            establecimiento: string,
+            periodo: string
+        }
+    } = {};
+
+    const subjects = [
+        'PUNT_INGLES',
+        'PUNT_MATEMATICAS',
+        'PUNT_SOCIALES_CIUDADANAS',
+        'PUNT_C_NATURALES',
+        'PUNT_LECTURA_CRITICA'
+    ];
+
+    if (!data || !Array.isArray(data)) return [];
+
+    data.forEach(item => {
+        // Normalize period
+        const rawPeriodo = String(item.periodo || '');
+        if (rawPeriodo.length < 5) return;
+        const periodo = rawPeriodo.slice(0, -1);
+
+        // Filter by Bolivar
+        if (item.cole_depto_ubicacion !== 'BOLIVAR') return;
+
+        const establecimiento = item.cole_nombre_establecimiento;
+        if (!establecimiento) return;
+
+        const key = `${establecimiento}-${periodo}`;
+        const bolivarKey = `PROMEDIO BOLIVAR-${periodo}`;
+
+        // Individual School Group
+        if (!groups[key]) {
+            groups[key] = {
+                sum: {
+                    PUNT_INGLES: 0,
+                    PUNT_MATEMATICAS: 0,
+                    PUNT_SOCIALES_CIUDADANAS: 0,
+                    PUNT_C_NATURALES: 0,
+                    PUNT_LECTURA_CRITICA: 0
+                },
+                count: 0,
+                establecimiento,
+                periodo
+            };
+        }
+
+        // Bolivar Average Group
+        if (!groups[bolivarKey]) {
+            groups[bolivarKey] = {
+                sum: {
+                    PUNT_INGLES: 0,
+                    PUNT_MATEMATICAS: 0,
+                    PUNT_SOCIALES_CIUDADANAS: 0,
+                    PUNT_C_NATURALES: 0,
+                    PUNT_LECTURA_CRITICA: 0
+                },
+                count: 0,
+                establecimiento: 'PROMEDIO BOLIVAR',
+                periodo
+            };
+        }
+
+        groups[key].count++;
+        groups[bolivarKey].count++;
+
+        subjects.forEach(sub => {
+            const val = parseFloat(item[sub.toLowerCase()]) || parseFloat(item[sub]) || 0;
+            groups[key].sum[sub] += val;
+            groups[bolivarKey].sum[sub] += val;
+        });
+    });
+
+    return Object.values(groups).map(group => {
+        const averages = subjects.map(sub => {
+            return parseFloat((group.sum[sub] / group.count).toFixed(2));
+        });
+
+        return {
+            name: group.establecimiento,
+            label: [
+                'Ingles',
+                'Matematicas',
+                'Sociales',
+                'Ciencias naturales',
+                'Lectura critica'
+            ],
+            datos: averages,
+            PERIODO: group.periodo
+        };
+    });
+};

@@ -1,8 +1,8 @@
 import { MdClose, MdDragIndicator } from "react-icons/md";
 import { useChart } from "../../contexts/ChartContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { dbService } from "../../services/indexedDB";
-import { processByNaturaleza, processGlobalScoreByNaturaleza } from "../../services/dataProcessor";
+import { processByNaturaleza, processGlobalScoreByNaturaleza, processByEstablecimiento } from "../../services/dataProcessor";
 import BarChartSelect from "./BarChartSelect";
 import BarChartCompare from "./BarChartCompare";
 
@@ -28,6 +28,8 @@ export default function ChartContainer({
                     
                     if (chartInfo.chartId === 2) {
                         setProcessedData(processGlobalScoreByNaturaleza(parsedData));
+                    } else if (chartInfo.chartId === 3) {
+                        setProcessedData(processByEstablecimiento(parsedData));
                     } else {
                         setProcessedData(processByNaturaleza(parsedData));
                     }
@@ -38,6 +40,18 @@ export default function ChartContainer({
         };
         fetchData();
     }, [chartInfo.instanceId, chartInfo.chartId]);
+
+    const chartOptions = useMemo(() => {
+        if (chartInfo.chartId === 3) {
+            // Extract unique names from processedData for options, excluding the comparison item
+            const uniqueNames = Array.from(new Set(processedData
+                .map(item => item.name)
+                .filter(name => name !== 'PROMEDIO BOLIVAR')
+            ));
+            return uniqueNames.sort();
+        }
+        return ['OFICIAL', 'NO OFICIAL'];
+    }, [chartInfo.chartId, processedData]);
 
     if (!processedData.length) {
         return <div>Loading...</div>;
@@ -67,8 +81,14 @@ export default function ChartContainer({
             <div className="flex-1 min-h-0">
                 {chartInfo.chartId === 2 ? (
                     <BarChartCompare data={processedData} />
+                ) : chartInfo.chartId === 3 ? (
+                    <BarChartSelect 
+                        data={processedData} 
+                        options={chartOptions} 
+                        comparisonItemName="PROMEDIO BOLIVAR"
+                    />
                 ) : (
-                    <BarChartSelect data={processedData} options={['OFICIAL','NO OFICIAL']} />
+                    <BarChartSelect data={processedData} options={chartOptions} />
                 )}
             </div>
         </div>

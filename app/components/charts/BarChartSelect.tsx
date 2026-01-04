@@ -31,9 +31,10 @@ interface DataItem {
 interface BarChartSelectProps {
     data: DataItem[];
     options: string[]; // Corresponds to 'name' in DataItem
+    comparisonItemName?: string; // e.g., 'PROMEDIO BOLIVAR'
 }
 
-export default function BarChartSelect({ data, options }: BarChartSelectProps) {
+export default function BarChartSelect({ data, options, comparisonItemName }: BarChartSelectProps) {
     // State for selections
     const [selectedYear, setSelectedYear] = useState<number>(2014);
     const [selectedOption, setSelectedOption] = useState<string>(options[0] || '');
@@ -52,6 +53,12 @@ export default function BarChartSelect({ data, options }: BarChartSelectProps) {
         return data.find(item => item.name === selectedOption && String(item.PERIODO) === String(selectedYear));
     }, [data, selectedOption, selectedYear]);
 
+    // Find comparison item for the same year
+    const comparisonItem = useMemo(() => {
+        if (!data || !comparisonItemName) return null;
+        return data.find(item => item.name === comparisonItemName && String(item.PERIODO) === String(selectedYear));
+    }, [data, comparisonItemName, selectedYear]);
+
     // Prepare Chart Data
     const chartData = useMemo(() => {
         if (!currentItem) {
@@ -61,17 +68,27 @@ export default function BarChartSelect({ data, options }: BarChartSelectProps) {
             };
         }
 
+        const datasets = [
+            {
+                label: selectedOption,
+                data: currentItem.datos,
+                backgroundColor: 'rgba(53, 162, 235, 0.5)',
+            },
+        ];
+
+        if (comparisonItem) {
+            datasets.push({
+                label: comparisonItemName || 'Comparison',
+                data: comparisonItem.datos,
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+            });
+        }
+
         return {
             labels: currentItem.label,
-            datasets: [
-                {
-                    label: selectedOption,
-                    data: currentItem.datos,
-                    backgroundColor: 'rgba(53, 162, 235, 0.5)',
-                },
-            ],
+            datasets: datasets,
         };
-    }, [currentItem, selectedOption]);
+    }, [currentItem, comparisonItem, selectedOption, comparisonItemName]);
 
     const chartOptions = {
         responsive: true,
