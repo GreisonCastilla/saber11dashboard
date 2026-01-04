@@ -2,7 +2,14 @@ import { MdClose, MdDragIndicator } from "react-icons/md";
 import { useChart } from "../../contexts/ChartContext";
 import { useEffect, useState, useMemo } from "react";
 import { dbService } from "../../services/indexedDB";
-import { processByNaturaleza, processGlobalScoreByNaturaleza, processByEstablecimiento, processGlobalScoreByEstablecimiento } from "../../services/dataProcessor";
+import { 
+    processByNaturaleza, 
+    processGlobalScoreByNaturaleza, 
+    processByEstablecimiento, 
+    processGlobalScoreByEstablecimiento,
+    processByEstablecimientoNational,
+    processGlobalScoreByEstablecimientoNational
+} from "../../services/dataProcessor";
 import BarChartSelect from "./BarChartSelect";
 import BarChartCompare from "./BarChartCompare";
 import BarChartGrouped from "./BarChartGrouped";
@@ -34,6 +41,10 @@ export default function ChartContainer({
                         setProcessedData(processByEstablecimiento(parsedData));
                     } else if (chartInfo.chartId === 4) {
                         setProcessedData(processGlobalScoreByEstablecimiento(parsedData));
+                    } else if (chartInfo.chartId === 5) {
+                        setProcessedData(processByEstablecimientoNational(parsedData));
+                    } else if (chartInfo.chartId === 6) {
+                        setProcessedData(processGlobalScoreByEstablecimientoNational(parsedData));
                     } else {
                         // Chart 1 and others use this default processing
                         setProcessedData(processByNaturaleza(parsedData));
@@ -47,11 +58,11 @@ export default function ChartContainer({
     }, [chartInfo.instanceId, chartInfo.chartId]);
 
     const chartOptions = useMemo(() => {
-        if (chartInfo.chartId === 3 || chartInfo.chartId === 4) {
-            // Extract unique names from processedData for options, excluding the comparison item
+        if ([3, 4, 5, 6].includes(chartInfo.chartId)) {
+            // Extract unique names from processedData for options, excluding the comparison items
             const uniqueNames = Array.from(new Set(processedData
                 .map(item => item.name)
-                .filter(name => name !== 'PROMEDIO BOLIVAR')
+                .filter(name => name !== 'PROMEDIO BOLIVAR' && name !== 'PROMEDIO COLOMBIA')
             ));
             return uniqueNames.sort();
         }
@@ -99,6 +110,18 @@ export default function ChartContainer({
                         data={processedData} 
                         options={chartOptions} 
                         comparisonItemName="PROMEDIO BOLIVAR"
+                    />
+                ) : chartInfo.chartId === 5 ? (
+                    <BarChartSelect 
+                        data={processedData} 
+                        options={chartOptions} 
+                        comparisonItemName="PROMEDIO COLOMBIA"
+                    />
+                ) : chartInfo.chartId === 6 ? (
+                    <BarChartHorizontalSelector 
+                        data={processedData} 
+                        options={chartOptions} 
+                        comparisonItemName="PROMEDIO COLOMBIA"
                     />
                 ) : (
                     <BarChartSelect data={processedData} options={chartOptions} />
