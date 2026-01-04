@@ -237,3 +237,66 @@ export const processByEstablecimiento = (data: any[]): ProcessedData[] => {
         };
     });
 };
+
+export const processGlobalScoreByEstablecimiento = (data: any[]): any[] => {
+    const groups: {
+        [key: string]: {
+            sum: number,
+            count: number,
+            establecimiento: string,
+            periodo: string
+        }
+    } = {};
+
+    if (!data || !Array.isArray(data)) return [];
+
+    data.forEach(item => {
+        // Normalize period
+        const rawPeriodo = String(item.periodo || '');
+        if (rawPeriodo.length < 5) return;
+        const periodo = rawPeriodo.slice(0, -1);
+
+        // Filter by Bolivar
+        if (item.cole_depto_ubicacion !== 'BOLIVAR') return;
+
+        const establecimiento = item.cole_nombre_establecimiento;
+        if (!establecimiento) return;
+
+        // Individual School
+        const key = `${establecimiento}-${periodo}`;
+        const bolivarKey = `PROMEDIO BOLIVAR-${periodo}`;
+
+        if (!groups[key]) {
+            groups[key] = {
+                sum: 0,
+                count: 0,
+                establecimiento,
+                periodo
+            };
+        }
+
+        // Bolivar Average
+        if (!groups[bolivarKey]) {
+            groups[bolivarKey] = {
+                sum: 0,
+                count: 0,
+                establecimiento: 'PROMEDIO BOLIVAR',
+                periodo
+            };
+        }
+
+        const val = parseFloat(item.punt_global) || parseFloat(item.PUNT_GLOBAL) || 0;
+
+        groups[key].sum += val;
+        groups[key].count++;
+
+        groups[bolivarKey].sum += val;
+        groups[bolivarKey].count++;
+    });
+
+    return Object.values(groups).map(group => ({
+        name: group.establecimiento,
+        avgGlobal: parseFloat((group.sum / group.count).toFixed(2)),
+        PERIODO: group.periodo
+    }));
+};

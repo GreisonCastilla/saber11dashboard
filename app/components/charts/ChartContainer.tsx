@@ -2,10 +2,11 @@ import { MdClose, MdDragIndicator } from "react-icons/md";
 import { useChart } from "../../contexts/ChartContext";
 import { useEffect, useState, useMemo } from "react";
 import { dbService } from "../../services/indexedDB";
-import { processByNaturaleza, processGlobalScoreByNaturaleza, processByEstablecimiento } from "../../services/dataProcessor";
+import { processByNaturaleza, processGlobalScoreByNaturaleza, processByEstablecimiento, processGlobalScoreByEstablecimiento } from "../../services/dataProcessor";
 import BarChartSelect from "./BarChartSelect";
 import BarChartCompare from "./BarChartCompare";
 import BarChartGrouped from "./BarChartGrouped";
+import BarChartHorizontalSelector from "./BarChartHorizontalSelector";
 
 export default function ChartContainer({
      chartInfo
@@ -31,6 +32,8 @@ export default function ChartContainer({
                         setProcessedData(processGlobalScoreByNaturaleza(parsedData));
                     } else if (chartInfo.chartId === 3) {
                         setProcessedData(processByEstablecimiento(parsedData));
+                    } else if (chartInfo.chartId === 4) {
+                        setProcessedData(processGlobalScoreByEstablecimiento(parsedData));
                     } else {
                         // Chart 1 and others use this default processing
                         setProcessedData(processByNaturaleza(parsedData));
@@ -44,7 +47,7 @@ export default function ChartContainer({
     }, [chartInfo.instanceId, chartInfo.chartId]);
 
     const chartOptions = useMemo(() => {
-        if (chartInfo.chartId === 3) {
+        if (chartInfo.chartId === 3 || chartInfo.chartId === 4) {
             // Extract unique names from processedData for options, excluding the comparison item
             const uniqueNames = Array.from(new Set(processedData
                 .map(item => item.name)
@@ -87,6 +90,12 @@ export default function ChartContainer({
                     <BarChartCompare data={processedData} />
                 ) : chartInfo.chartId === 3 ? (
                     <BarChartSelect 
+                        data={processedData} 
+                        options={chartOptions} 
+                        comparisonItemName="PROMEDIO BOLIVAR"
+                    />
+                ) : chartInfo.chartId === 4 ? (
+                    <BarChartHorizontalSelector 
                         data={processedData} 
                         options={chartOptions} 
                         comparisonItemName="PROMEDIO BOLIVAR"
