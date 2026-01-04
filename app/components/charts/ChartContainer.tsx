@@ -11,7 +11,9 @@ import {
     processByEstablecimientoNational,
     processGlobalScoreByEstablecimientoNational,
     processByEstrato,
-    processGlobalScoreByEstrato
+    processGlobalScoreByEstrato,
+    processGlobalScoreByEducationPadre,
+    processGlobalScoreByEducationMadre
 } from "../../services/dataProcessor";
 import BarChartSelect from "./BarChartSelect";
 import BarChartCompare from "./BarChartCompare";
@@ -121,6 +123,10 @@ export default function ChartContainer({
             setProcessedData(processByEstrato(data));
         } else if (chartInfo.chartId === 8) {
             setProcessedData(processGlobalScoreByEstrato(data));
+        } else if (chartInfo.chartId === 9) {
+            setProcessedData(processGlobalScoreByEducationPadre(data));
+        } else if (chartInfo.chartId === 10) {
+            setProcessedData(processGlobalScoreByEducationMadre(data));
         } else {
             setProcessedData(processByNaturaleza(data));
         }
@@ -134,9 +140,9 @@ export default function ChartContainer({
             ));
             return uniqueNames.sort();
         }
-        if ([7, 8].includes(chartInfo.chartId)) {
-             const uniqueEstratos = Array.from(new Set(processedData.map(item => item.name)));
-             return uniqueEstratos.sort();
+        if ([7, 8, 9, 10].includes(chartInfo.chartId)) {
+             const uniqueCategories = Array.from(new Set(processedData.map(item => item.name)));
+             return uniqueCategories.sort();
         }
         return ['OFICIAL', 'NO OFICIAL'];
     }, [chartInfo.chartId, processedData]);
@@ -208,7 +214,7 @@ export default function ChartContainer({
                         data={processedData} 
                         onYearChange={handleSelectionChange}
                     />
-                ) : chartInfo.chartId === 8 ? (
+                ) : chartInfo.chartId === 8 || chartInfo.chartId === 9 || chartInfo.chartId === 10 ? (
                     <BarChartCategories 
                         data={processedData} 
                         isGlobal={true}

@@ -570,3 +570,86 @@ export const processGlobalScoreByEstrato = (data: any[]): any[] => {
         PERIODO: group.periodo
     }));
 };
+export const processGlobalScoreByEducationPadre = (data: any[]): any[] => {
+    const groups: {
+        [key: string]: {
+            sum: number,
+            count: number,
+            educacion: string,
+            periodo: string
+        }
+    } = {};
+
+    if (!data || !Array.isArray(data)) return [];
+
+    data.forEach(item => {
+        const rawPeriodo = String(item.periodo || item.PERIODO || '');
+        if (rawPeriodo.length < 4) return;
+        const periodo = rawPeriodo.length === 5 ? rawPeriodo.slice(0, -1) : rawPeriodo;
+
+        const educacion = item.fami_educacionpadre || item.FAMI_EDUCACIONPADRE || 'SIN ESPECIFICAR';
+
+        const key = `${educacion}-${periodo}`;
+
+        if (!groups[key]) {
+            groups[key] = {
+                sum: 0,
+                count: 0,
+                educacion,
+                periodo
+            };
+        }
+
+        const val = parseFloat(item.punt_global) || parseFloat(item.PUNT_GLOBAL) || 0;
+        groups[key].sum += val;
+        groups[key].count++;
+    });
+
+    return Object.values(groups).map(group => ({
+        name: group.educacion,
+        avgGlobal: parseFloat((group.sum / group.count).toFixed(2)),
+        PERIODO: group.periodo
+    }));
+};
+
+export const processGlobalScoreByEducationMadre = (data: any[]): any[] => {
+    const groups: {
+        [key: string]: {
+            sum: number,
+            count: number,
+            educacion: string,
+            periodo: string
+        }
+    } = {};
+
+    if (!data || !Array.isArray(data)) return [];
+
+    data.forEach(item => {
+        const rawPeriodo = String(item.periodo || item.PERIODO || '');
+        if (rawPeriodo.length < 4) return;
+        const periodo = rawPeriodo.length === 5 ? rawPeriodo.slice(0, -1) : rawPeriodo;
+
+        const educacion = item.fami_educacionmadre || item.FAMI_EDUCACIONMADRE || 'SIN ESPECIFICAR';
+
+        const key = `${educacion}-${periodo}`;
+
+        if (!groups[key]) {
+            groups[key] = {
+                sum: 0,
+                count: 0,
+                educacion,
+                periodo
+            };
+        }
+
+        const val = parseFloat(item.punt_global) || parseFloat(item.PUNT_GLOBAL) || 0;
+        groups[key].sum += val;
+        groups[key].count++;
+    });
+
+    return Object.values(groups).map(group => ({
+        name: group.educacion,
+        avgGlobal: parseFloat((group.sum / group.count).toFixed(2)),
+        PERIODO: group.periodo
+    }));
+};

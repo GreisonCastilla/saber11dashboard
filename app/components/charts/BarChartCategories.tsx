@@ -49,21 +49,37 @@ export default function BarChartCategories({ data, isGlobal = false, onYearChang
         if (!data) return [];
         const filtered = data.filter(item => String(item.PERIODO) === String(selectedYear));
         
-        // Custom sort for Estratos
+        // Custom sort for Estratos and Education
         return [...filtered].sort((a, b) => {
-            const estratoOrder: { [key: string]: number } = {
+            const customOrder: { [key: string]: number } = {
+                // Estratos
                 'ESTRATO 1': 1,
                 'ESTRATO 2': 2,
                 'ESTRATO 3': 3,
                 'ESTRATO 4': 4,
                 'ESTRATO 5': 5,
                 'ESTRATO 6': 6,
-                'SIN ESPECIFICAR': 7,
-                'NO SABE': 8
+                
+                // Education levels
+                'NINGUNO': 10,
+                'PRIMARIA INCOMPLETA': 11,
+                'PRIMARIA COMPLETA': 12,
+                'SECUNDARIA (BACHILLERATO) INCOMPLETA': 13,
+                'SECUNDARIA (BACHILLERATO) COMPLETA': 14,
+                'TÉCNICA O TECNOLÓGICA INCOMPLETA': 15,
+                'TÉCNICA O TECNOLÓGICA COMPLETA': 16,
+                'EDUCACIÓN PROFESIONAL INCOMPLETA': 17,
+                'EDUCACIÓN PROFESIONAL COMPLETA': 18,
+                'POSTGRADO': 19,
+
+                // Others
+                'SIN ESPECIFICAR': 98,
+                'NO SABE': 99,
+                'NO INFORMA': 100
             };
 
-            const orderA = estratoOrder[a.name.toUpperCase()] || 99;
-            const orderB = estratoOrder[b.name.toUpperCase()] || 99;
+            const orderA = customOrder[a.name.toUpperCase()] || 999;
+            const orderB = customOrder[b.name.toUpperCase()] || 999;
 
             return orderA - orderB;
         });
