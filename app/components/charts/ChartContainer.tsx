@@ -2,8 +2,9 @@ import { MdClose, MdDragIndicator } from "react-icons/md";
 import { useChart } from "../../contexts/ChartContext";
 import { useEffect, useState } from "react";
 import { dbService } from "../../services/indexedDB";
-import { processByNaturaleza } from "../../services/dataProcessor";
+import { processByNaturaleza, processGlobalScoreByNaturaleza } from "../../services/dataProcessor";
 import BarChartSelect from "./BarChartSelect";
+import BarChartCompare from "./BarChartCompare";
 
 export default function ChartContainer({
      chartInfo
@@ -12,6 +13,7 @@ export default function ChartContainer({
         name: string;
         typeChart: string;
         instanceId: string;
+        chartId: number; 
     };
 }) {
     const { removeChart } = useChart();
@@ -23,30 +25,34 @@ export default function ChartContainer({
                 const rawData = await dbService.getData('apiResponse');
                 if (rawData) {
                     const parsedData = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-                    setProcessedData(processByNaturaleza(parsedData));
+                    
+                    if (chartInfo.chartId === 2) {
+                        setProcessedData(processGlobalScoreByNaturaleza(parsedData));
+                    } else {
+                        setProcessedData(processByNaturaleza(parsedData));
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
             }
         };
         fetchData();
-    }, [chartInfo.instanceId]);
+    }, [chartInfo.instanceId, chartInfo.chartId]);
 
     if (!processedData.length) {
         return <div>Loading...</div>;
     }
 
-    console.log(processedData);
     return (
-        <div>
-        <div className="flex justify-between gap-2">
+        <div className="h-full flex flex-col">
+        <div className="flex justify-between gap-2 shrink-0 mb-2">
             <div 
                 className="drag-handle rotate-90 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab hover:cursor-grabbing"
                 onClick={(e) => e.stopPropagation()}
             >
                 <MdDragIndicator size={14} className="text-primary" />
             </div>
-            <h1>{chartInfo.name}</h1>
+            <h1 className="font-semibold text-sm truncate">{chartInfo.name}</h1>
             <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -58,7 +64,13 @@ export default function ChartContainer({
                     <MdClose size={14} />
                 </button>
         </div>  
-            <BarChartSelect data={processedData} options={['OFICIAL','NO OFICIAL']} />  
+            <div className="flex-1 min-h-0">
+                {chartInfo.chartId === 2 ? (
+                    <BarChartCompare data={processedData} />
+                ) : (
+                    <BarChartSelect data={processedData} options={['OFICIAL','NO OFICIAL']} />
+                )}
+            </div>
         </div>
     );
 }

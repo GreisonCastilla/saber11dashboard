@@ -83,3 +83,47 @@ export const processByNaturaleza = (data: any[]): ProcessedData[] => {
 
     return result;
 };
+
+export const processGlobalScoreByNaturaleza = (data: any[]): any[] => {
+    const groups: {
+        [key: string]: {
+            sum: number,
+            count: number,
+            naturaleza: string,
+            periodo: string
+        }
+    } = {};
+
+    if (!data || !Array.isArray(data)) return [];
+
+    data.forEach(item => {
+        // Normalize period
+        const rawPeriodo = String(item.periodo || '');
+        if (rawPeriodo.length < 5) return;
+        const periodo = rawPeriodo.slice(0, -1);
+
+        const naturaleza = item.cole_naturaleza;
+        if (!naturaleza) return;
+
+        const key = `${naturaleza}-${periodo}`;
+
+        if (!groups[key]) {
+            groups[key] = {
+                sum: 0,
+                count: 0,
+                naturaleza,
+                periodo
+            };
+        }
+
+        const val = parseFloat(item.punt_global) || parseFloat(item.PUNT_GLOBAL) || 0;
+        groups[key].sum += val;
+        groups[key].count++;
+    });
+
+    return Object.values(groups).map(group => ({
+        name: group.naturaleza,
+        avgGlobal: parseFloat((group.sum / group.count).toFixed(2)),
+        PERIODO: group.periodo
+    }));
+};
