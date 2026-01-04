@@ -32,9 +32,10 @@ interface BarChartHorizontalSelectorProps {
     data: DataItem[];
     options: string[];
     comparisonItemName?: string;
+    onOptionSelect?: (option: string) => void;
 }
 
-export default function BarChartHorizontalSelector({ data, options, comparisonItemName }: BarChartHorizontalSelectorProps) {
+export default function BarChartHorizontalSelector({ data, options, comparisonItemName, onOptionSelect }: BarChartHorizontalSelectorProps) {
     // State
     const [selectedYear, setSelectedYear] = useState<number>(2014);
     const [selectedOption, setSelectedOption] = useState<string>(options[0] || '');
@@ -119,7 +120,10 @@ export default function BarChartHorizontalSelector({ data, options, comparisonIt
                         label="Colegio"
                         options={options}
                         value={selectedOption}
-                        onChange={(value) => setSelectedOption(value)}
+                        onChange={(value) => {
+                            setSelectedOption(value);
+                            if (onOptionSelect) onOptionSelect(value);
+                        }}
                         placeholder="Search school..."
                     />
 

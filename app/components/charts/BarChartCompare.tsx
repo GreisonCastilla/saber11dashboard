@@ -105,7 +105,7 @@ export default function BarChartCompare({ data }: BarChartCompareProps) {
                         id="year-slider-compare"
                         type="range"
                         min="2014"
-                        max="2025"
+                        max="2022"
                         step="1"
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(Number(e.target.value))}
@@ -113,7 +113,7 @@ export default function BarChartCompare({ data }: BarChartCompareProps) {
                     />
                     <div className="flex justify-between text-[10px] text-gray-400 mt-1">
                         <span>2014</span>
-                        <span>2025</span>
+                        <span>2022</span>
                     </div>
                 </div>
             </div>

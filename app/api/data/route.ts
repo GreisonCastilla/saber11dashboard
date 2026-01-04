@@ -13,7 +13,7 @@ export async function POST(req: Request) {
                 query,
                 page: {
                     pageNumber: 1,
-                    pageSize: 1000000,
+                    pageSize: 700000,
                 },
                 includeSynthetic: false,
             }),

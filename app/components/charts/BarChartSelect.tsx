@@ -33,9 +33,10 @@ interface BarChartSelectProps {
     data: DataItem[];
     options: string[]; // Corresponds to 'name' in DataItem
     comparisonItemName?: string; // e.g., 'PROMEDIO BOLIVAR'
+    onOptionSelect?: (option: string) => void;
 }
 
-export default function BarChartSelect({ data, options, comparisonItemName }: BarChartSelectProps) {
+export default function BarChartSelect({ data, options, comparisonItemName, onOptionSelect }: BarChartSelectProps) {
     // State for selections
     const [selectedYear, setSelectedYear] = useState<number>(2014);
     const [selectedOption, setSelectedOption] = useState<string>(options[0] || '');
@@ -124,7 +125,10 @@ export default function BarChartSelect({ data, options, comparisonItemName }: Ba
                         label="Metric"
                         options={options}
                         value={selectedOption}
-                        onChange={(value) => setSelectedOption(value)}
+                        onChange={(value) => {
+                            setSelectedOption(value);
+                            if (onOptionSelect) onOptionSelect(value);
+                        }}
                         placeholder="Select metric..."
                     />
 
@@ -138,7 +142,7 @@ export default function BarChartSelect({ data, options, comparisonItemName }: Ba
                             id="year-slider"
                             type="range"
                             min="2014"
-                            max="2025"
+                            max="2022"
                             step="1"
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(Number(e.target.value))}
@@ -146,7 +150,7 @@ export default function BarChartSelect({ data, options, comparisonItemName }: Ba
                         />
                         <div className="flex justify-between text-[10px] text-gray-400 mt-1">
                             <span>2014</span>
-                            <span>2025</span>
+                            <span>2022</span>
                         </div>
                     </div>
                 </div>

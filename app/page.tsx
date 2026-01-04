@@ -9,7 +9,7 @@ import { dbService } from "./services/indexedDB";
 export default function Home() {
 
   useEffect(() => {
-    fetchDatos("SELECT * WHERE PERIODO >'2014'").then(async (data) => {
+    fetchDatos("SELECT *").then(async (data) => {
       try {
         const parsedData = JSON.parse(data);
         const formattedData = parsedData.map((item: any) => ({
