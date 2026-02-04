@@ -7,6 +7,7 @@ import { useMemo } from "react";
 import chart from "../graphics/Graphics.json";
 import AddChart from "./addChart/AddChart";
 import SearchChart from "./input/SearchChart";
+import PageSelector from "./PageSelector";
 
 function filterChartsList(charts: any[], q: string) {
   const query = q.trim().toLowerCase();
@@ -61,6 +62,7 @@ export default function Sidebar() {
           (state ? " block" : " hidden")
         }
       >
+        <PageSelector />
         <span className="font-semibold">Gráficos</span>
         <SearchChart onSearch={setQuery} delay={400} />
         <div className="flex flex-col h-full  mt-2">
