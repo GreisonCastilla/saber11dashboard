@@ -193,7 +193,7 @@ export default function ChartContainer({
         <div className="h-full flex flex-col">
         <div className="flex justify-between gap-2 shrink-0 mb-2">
             <div 
-                className="drag-handle rotate-90 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab hover:cursor-grabbing"
+                className="drag-handle rotate-90 md:opacity-0 opacity-100 group-hover:opacity-100 transition-opacity cursor-grab hover:cursor-grabbing"
                 onClick={(e) => e.stopPropagation()}
             >
                 <MdDragIndicator size={14} className="text-primary" />
@@ -205,7 +205,7 @@ export default function ChartContainer({
                         removeChart(chartInfo.instanceId);
                     }}
                     onMouseDown={(e) => e.stopPropagation()} 
-                    className=" text-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    className=" text-red-500 rounded-full md:opacity-0 opacity-100 group-hover:opacity-100 transition-opacity cursor-pointer"
                 >
                     <MdClose size={14} />
                 </button>
