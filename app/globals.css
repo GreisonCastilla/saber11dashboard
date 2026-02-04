@@ -62,6 +62,7 @@ body {
     color: #0242d2;
     fill: #0242d2;
     /* Primary color hint */
+    border-bottom-right-radius: 5px !important;
     width: 20px;
     height: 20px;
     bottom: 0px;
@@ -84,5 +85,31 @@ body {
 @media (pointer: coarse) {
   .group-hover\:opacity-100 {
     opacity: 1 !important;
+  }
+
+  /* Ensure resize handle is visible on ANY touch device (e.g. iPad landscape) */
+  .react-resizable-handle {
+    opacity: 1 !important;
+    border-right: 2px solid rgba(0, 0, 0, 0.5);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+    border-color: #0242d2;
+    color: #0242d2;
+    fill: #0242d2;
+    border-bottom-right-radius: 5px !important;
+    width: 20px;
+    height: 20px;
+    bottom: 0px;
+    right: 0px;
+  }
+
+  .react-resizable-handle::after {
+    content: "";
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 5px;
+    height: 5px;
+    border-right: 2px solid white;
+    border-bottom: 2px solid white;
   }
 }

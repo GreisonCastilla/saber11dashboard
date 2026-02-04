@@ -47,7 +47,8 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={
-          "flex flex-col border-r dark:border-gray-700 border-gray-300 bg-white h-full dark:bg-gray-900 p-4 transition-all ease-in-out duration-500 z-30 " +
+          "flex flex-col border-r dark:border-gray-700 border-gray-300 bg-white h-full dark:bg-gray-900 transition-all ease-in-out duration-500 z-30 " +
+          (state ? "p-4 " : "py-4 px-0 ") +
           // Mobile: Fixed overlay on RIGHT side
           "fixed md:static inset-y-0 right-0 md:left-auto " + 
           (state
@@ -58,15 +59,16 @@ export default function Sidebar() {
         <div className="flex items-center group relative min-h-[32px]">
           {/* Maximize Button (Hidden when closed, show on hover. Adjusted to opacity-50 for visibility hint) */}
           {!state && (
-            <div className="absolute left-0 w-full h-full flex items-center justify-center opacity-50 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer" onClick={toggleSidebar}>
-               <HiChevronRight className={"h-8 w-8 fill-primary" + (state ?  " hidden": " block")} />
+            <div className="absolute left-0 w-full h-full flex items-center justify-center cursor-pointer" onClick={toggleSidebar}>
+               <HiChevronRight className={"h-8 w-8 text-primary" + (state ? " block" : " hidden")} />
             </div>
           )}
 
+          <HiChevronRight onClick={toggleSidebar} className={"h-8 w-8 text-primary" + (state ? " hidden" : " block")} />
           <HiChevronLeft
             onClick={toggleSidebar}
             className={
-              "h-8 w-8 fill-primary transition-all ease-in-out duration-300 cursor-pointer " +
+              "h-8 w-8 text-primary transition-all ease-in-out duration-300 cursor-pointer " +
               (state ? "hidden md:block" : "hidden")
             }
           />
