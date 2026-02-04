@@ -62,7 +62,9 @@ export default function Sidebar() {
           (state ? " block" : " hidden")
         }
       >
-        <PageSelector />
+        <div className="md:hidden">
+            <PageSelector mode="sidebar" />
+        </div>
         <span className="font-semibold">Gráficos</span>
         <SearchChart onSearch={setQuery} delay={400} />
         <div className="flex flex-col h-full  mt-2">

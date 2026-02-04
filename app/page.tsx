@@ -2,6 +2,7 @@
 import Sidebar from "./components/sidebar";
 import Footer from "./components/footer";
 import GridChart from "./components/gridChart/GridChart";
+import PageSelector from "./components/PageSelector";
 import { fetchDatos } from "./api/data/query";
 import { useEffect } from "react";
 import { dbService } from "./services/indexedDB";
@@ -37,6 +38,9 @@ export default function Home() {
       <main className=" flex w-full min-w-screen max-w-3xl justify-left bg-slate-300 dark:bg-slate-800 sm:items-start">
         <Sidebar />
         <div className="flex flex-col w-full h-full min-h-screen">
+          <div className="hidden md:block">
+            <PageSelector mode="topbar" />
+          </div>
           <div className="flex flex-1 grow">
             <GridChart />
           </div>
