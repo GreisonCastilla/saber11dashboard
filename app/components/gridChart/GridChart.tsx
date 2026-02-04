@@ -30,15 +30,36 @@ export default function GridChart() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    const isMobile = width < 768;
+    // Generate a default mobile layout if none exists
+    const currentMobileLayout = (activeCharts || []).map((chart, i) => {
+        // Check if we have a saved layout item
+        const savedItem = (useChart().mobileLayout || []).find(l => l.i === chart.instanceId);
+        if (savedItem) return savedItem;
+        
+        // Default mobile item
+        return {
+            i: chart.instanceId,
+            x: 0,
+            y: i * 10,
+            w: 1,
+            h: 10,
+            minW: 1,
+            minH: 5
+        };
+    });
+
+    const currentLayout = isMobile ? currentMobileLayout : layout;
+
     return (
     <div ref={containerRef} className="w-full min-h-full">
      {mounted && (
         <ReactGridLayout
-          layout={layout}
+          layout={currentLayout}
           width={width}
-          cols={12}
-          rowHeight={rowHeight} // Dynamic row height
-          onLayoutChange={updateLayout}
+          cols={isMobile ? 1 : 12}
+          rowHeight={rowHeight}
+          onLayoutChange={(l) => updateLayout(l, isMobile)}
           draggableHandle=".drag-handle"
           isResizable={true}
         >

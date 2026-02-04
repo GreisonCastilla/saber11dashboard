@@ -40,7 +40,7 @@ export default function AccessibilityButton() {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="fixed bottom-4 right-4 z-100">
       {/* Main Button */}
       <button
         onClick={toggleMenu}
@@ -52,7 +52,7 @@ export default function AccessibilityButton() {
 
       {/* Menu */}
       {isOpen && (
-        <div className="absolute top-16 right-0 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4 flex flex-col gap-2">
+        <div className="absolute bottom-16 right-0 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4 flex flex-col gap-2">
           {/* Dark Mode Toggle */}
           <button
             onClick={toggleTheme}

@@ -15,17 +15,19 @@ export interface Page {
     name: string;
     charts: ChartInstance[];
     layout: Layout;
+    mobileLayout: Layout;
 }
 
 interface ChartContextType {
     pages: Page[];
     activePageId: string;
-    activeCharts: ChartInstance[]; // Computed from active page
-    layout: Layout; // Computed from active page
+    activeCharts: ChartInstance[]; 
+    layout: Layout;
+    mobileLayout: Layout;
     addChart: (chartData: any) => void;
     removeChart: (instanceId: string) => void;
-    updateLayout: (newLayout: Layout) => void;
-    addPage: (name: string, predefinedCharts?: ChartInstance[], predefinedLayout?: Layout) => void;
+    updateLayout: (newLayout: Layout, isMobile?: boolean) => void;
+    addPage: (name: string, predefinedCharts?: ChartInstance[], predefinedLayout?: Layout, predefinedMobileLayout?: Layout) => void;
     removePage: (pageId: string) => void;
     setActivePage: (pageId: string) => void;
     updatePageName: (pageId: string, newName: string) => void;
@@ -51,19 +53,19 @@ export function ChartProvider({ children }: { children: ReactNode }) {
                     setActivePageId(parsed.activePageId || parsed.pages[0].id);
                 } else {
                     // Initialize default if parsed data is invalid/empty
-                    const defaultPage: Page = { id: 'default', name: 'Home', charts: [], layout: [] };
+                    const defaultPage: Page = { id: 'default', name: 'Home', charts: [], layout: [], mobileLayout: [] };
                     setPages([defaultPage]);
                     setActivePageId(defaultPage.id);
                 }
             } catch (e) {
                 console.error("Failed to parse saved chart data", e);
-                const defaultPage: Page = { id: 'default', name: 'Home', charts: [], layout: [] };
+                const defaultPage: Page = { id: 'default', name: 'Home', charts: [], layout: [], mobileLayout: [] };
                 setPages([defaultPage]);
                 setActivePageId(defaultPage.id);
             }
         } else {
             // Initialize default page
-            const defaultPage: Page = { id: 'default', name: 'Home', charts: [], layout: [] };
+            const defaultPage: Page = { id: 'default', name: 'Home', charts: [], layout: [], mobileLayout: [] };
             setPages([defaultPage]);
             setActivePageId(defaultPage.id);
         }
@@ -93,13 +95,23 @@ export function ChartProvider({ children }: { children: ReactNode }) {
             typeChart: chartData.typeChart,
         };
 
-        const newLayoutItem = {
+        const newDesktopItem = {
             i: instanceId,
             x: 0,
             y: Infinity,
             w: 4,
             h: 13,
             minW: 3,
+            minH: 5,
+        };
+        
+        const newMobileItem = {
+            i: instanceId,
+            x: 0,
+            y: Infinity,
+            w: 1, // Full width (col=1)
+            h: 10, // Default mobile height (scaled by rowHeight later)
+            minW: 1,
             minH: 5,
         };
 
@@ -109,7 +121,9 @@ export function ChartProvider({ children }: { children: ReactNode }) {
                     ...p,
                     charts: [...p.charts, newChart],
                     // @ts-ignore
-                    layout: [...p.layout, newLayoutItem]
+                    layout: [...p.layout, newDesktopItem],
+                    // @ts-ignore
+                    mobileLayout: [...(p.mobileLayout || []), newMobileItem]
                 };
             }
             return p;
@@ -124,30 +138,35 @@ export function ChartProvider({ children }: { children: ReactNode }) {
                     ...p,
                     charts: p.charts.filter(c => c.instanceId !== instanceId),
                     // @ts-ignore
-                    layout: p.layout.filter(l => l.i !== instanceId)
+                    layout: p.layout.filter(l => l.i !== instanceId),
+                    // @ts-ignore
+                    mobileLayout: (p.mobileLayout || []).filter(l => l.i !== instanceId)
                 };
             }
             return p;
         }));
     };
 
-    const updateLayout = (newLayout: Layout) => {
+    const updateLayout = (newLayout: Layout, isMobile: boolean = false) => {
         if (!activePageId) return;
         setPages(prev => prev.map(p => {
             if (p.id === activePageId) {
-                return { ...p, layout: newLayout };
+                return isMobile 
+                    ? { ...p, mobileLayout: newLayout }
+                    : { ...p, layout: newLayout };
             }
             return p;
         }));
     };
 
-    const addPage = (name: string, predefinedCharts: ChartInstance[] = [], predefinedLayout: Layout = []) => {
+    const addPage = (name: string, predefinedCharts: ChartInstance[] = [], predefinedLayout: Layout = [], predefinedMobileLayout: Layout = []) => {
         const newPageId = `page-${Date.now()}`;
         const newPage: Page = {
             id: newPageId,
             name,
             charts: predefinedCharts,
-            layout: predefinedLayout
+            layout: predefinedLayout,
+            mobileLayout: predefinedMobileLayout
         };
         setPages(prev => [...prev, newPage]);
         setActivePageId(newPageId);
@@ -192,6 +211,7 @@ export function ChartProvider({ children }: { children: ReactNode }) {
             activePageId,
             activeCharts: activePage?.charts || [],
             layout: activePage?.layout || [],
+            mobileLayout: activePage?.mobileLayout || [],
             addChart,
             removeChart,
             updateLayout,
