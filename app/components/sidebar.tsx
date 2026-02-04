@@ -22,7 +22,7 @@ function filterChartsList(charts: any[], q: string) {
 }
 
 export default function Sidebar() {
-  const [state, setState] = useState(true);
+  const [state, setState] = useState(true); // Desktop: true = open, false = minimized. Mobile: true = open (overlay), false = closed.
   const [query, setQuery] = useState("");
 
   const filteredCharts = useMemo(() => filterChartsList(chart as any[], query), [query]);
@@ -30,54 +30,83 @@ export default function Sidebar() {
   function toggleSidebar() {
     setState(!state);
   }
+
   return (
-    <aside
-      className={
-        "flex flex-col absolute z-30  border-r dark:border-gray-700 border-gray-300 bg-white h-full dark:bg-gray-900 p-4 transition-all ease-in-out duration-500 " +
-        (state
-          ? " w-72 md:static"
-          : " w-10 max-h-10 m-2 absolute border-r-0 rounded-lg justify-center items-center")
-      }
-    >
-      <div className="flex items-center ">
-        <HiChevronLeft
-          onClick={toggleSidebar}
-          className={
-            "h-8 w-8 fill-primary transition-all ease-in-out duration-300" +
-            (state ? " block" : " hidden")
-          }
-        />
-        <HiChevronRight
-          onClick={toggleSidebar}
-          className={
-            "h-8 w-8 fill-primary transition-all ease-in-out duration-300" +
-            (state ? " hidden" : " block")
-          }
-        />
-        {state && <Logo />}
+    <>
+      {/* Mobile Hero */}
+      <div className="md:hidden fixed top-0 w-full z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between h-16">
+        <Logo />
+        <button onClick={toggleSidebar} className="p-2 text-primary">
+            {state ? <HiChevronLeft className="h-6 w-6" /> : <HiChevronRight className="h-6 w-6" />}
+        </button>
       </div>
-      <div
+
+      {/* Spacer for Mobile Hero */}
+      <div className="md:hidden h-16 w-full shrink-0" />
+
+      {/* Sidebar */}
+      <aside
         className={
-          "mt-6 flex flex-col gap-2 max-h-full  transition-all ease-in-out duration-300" +
-          (state ? " block" : " hidden")
+          "flex flex-col border-r dark:border-gray-700 border-gray-300 bg-white h-full dark:bg-gray-900 p-4 transition-all ease-in-out duration-500 z-30 " +
+          // Mobile: Fixed overlay
+          "fixed md:static inset-y-0 left-0 " + 
+          (state
+            ? "translate-x-0 w-72"
+            : "-translate-x-full md:translate-x-0 w-10 max-h-10 m-2 md:m-0 md:max-h-full border-r-0 md:border-r rounded-lg md:rounded-none justify-center items-center")
         }
       >
-        <div className="md:hidden">
-            <PageSelector mode="sidebar" />
-        </div>
-        <span className="font-semibold">Gráficos</span>
-        <SearchChart onSearch={setQuery} delay={400} />
-        <div className="flex flex-col h-full  mt-2">
-            {filteredCharts.map((chartItem, i) => (
-              <AddChart key={`${(chartItem as any).id ?? i}-${i}`} chart={chartItem} index={i} />
-            ))}
-        </div>
-        {filteredCharts.length === 0 && (
-          <div className="mt-4 text-center text-gray-500">
-            No se encontraron gráficos.
+        <div className="flex items-center group relative min-h-[32px]">
+          {/* Maximize Button (Hidden when closed, show on hover) */}
+          {!state && (
+            <div className="absolute left-0 w-full h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer" onClick={toggleSidebar}>
+               <HiChevronRight className="h-8 w-8 fill-primary" />
+            </div>
+          )}
+
+          <HiChevronLeft
+            onClick={toggleSidebar}
+            className={
+              "h-8 w-8 fill-primary transition-all ease-in-out duration-300 cursor-pointer hidden md:block" +
+              (state ? " block" : " hidden")
+            }
+          />
+          
+          <div className={state ? "block" : "hidden"}>
+             <Logo />
           </div>
-        )}
-      </div>
-    </aside>
+        </div>
+
+        <div
+          className={
+            "mt-6 flex flex-col gap-2 max-h-full transition-all ease-in-out duration-300 overflow-hidden" +
+            (state ? " block" : " hidden")
+          }
+        >
+          <div className="md:hidden">
+              <PageSelector mode="sidebar" />
+          </div>
+          <span className="font-semibold">Gráficos</span>
+          <SearchChart onSearch={setQuery} delay={400} />
+          <div className="flex flex-col mt-2 max-h-[calc(100vh-250px)] overflow-y-auto items-stretch pr-1">
+              {filteredCharts.map((chartItem, i) => (
+                <AddChart key={`${(chartItem as any).id ?? i}-${i}`} chart={chartItem} index={i} />
+              ))}
+          </div>
+          {filteredCharts.length === 0 && (
+            <div className="mt-4 text-center text-gray-500">
+              No se encontraron gráficos.
+            </div>
+          )}
+        </div>
+      </aside>
+      
+      {/* Mobile Overlay Backdrop */}
+      {state && (
+        <div 
+            className="md:hidden fixed inset-0 z-20 bg-black/50 backdrop-blur-sm"
+            onClick={() => setState(false)}
+        />
+      )}
+    </>
   );
 }
