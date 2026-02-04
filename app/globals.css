@@ -51,3 +51,38 @@ body {
   animation-fill-mode: forwards;
   /* keep final state */
 }
+
+/* Ensure resize handle is visible on mobile */
+@media (max-width: 768px) {
+  .react-resizable-handle {
+    opacity: 1 !important;
+    border-right: 2px solid rgba(0, 0, 0, 0.5);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+    border-color: #0242d2;
+    color: #0242d2;
+    fill: #0242d2;
+    /* Primary color hint */
+    width: 20px;
+    height: 20px;
+    bottom: 0px;
+    right: 0px;
+  }
+
+  .react-resizable-handle::after {
+    content: "";
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 5px;
+    height: 5px;
+    border-right: 2px solid white;
+    border-bottom: 2px solid white;
+  }
+}
+
+/* Force visibility of hover-reveal elements on touch devices */
+@media (pointer: coarse) {
+  .group-hover\:opacity-100 {
+    opacity: 1 !important;
+  }
+}

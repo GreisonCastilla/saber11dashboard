@@ -82,6 +82,31 @@ export function ChartProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
     }, [pages, activePageId, isLoaded]);
 
+    // Update minimum dimensions for all existing charts to allow smaller resizing
+    useEffect(() => {
+        if (!isLoaded || pages.length === 0) return;
+        
+        const updatedPages = pages.map(page => ({
+            ...page,
+            // @ts-ignore
+            layout: page.layout.map(l => ({ ...l, minW: 2, minH: 3 })),
+            // @ts-ignore
+            mobileLayout: (page.mobileLayout || []).map(l => ({ ...l, minW: 1, minH: 3 }))
+        }));
+
+        // Only update if there are changes to avoid loop (check first item's minW as proxy)
+        const needsUpdate = pages.some(p => 
+            // @ts-ignore
+            p.layout.some(l => l.minW > 2 || l.minH > 3) || 
+            // @ts-ignore
+            (p.mobileLayout || []).some(l => l.minH > 3)
+        );
+
+        if (needsUpdate) {
+            setPages(updatedPages);
+        }
+    }, [isLoaded]);
+
     const getActivePage = () => pages.find(p => p.id === activePageId) || pages[0];
 
     const addChart = (chartData: any) => {
@@ -101,8 +126,8 @@ export function ChartProvider({ children }: { children: ReactNode }) {
             y: Infinity,
             w: 4,
             h: 13,
-            minW: 3,
-            minH: 5,
+            minW: 2,
+            minH: 3,
         };
         
         const newMobileItem = {
@@ -112,7 +137,7 @@ export function ChartProvider({ children }: { children: ReactNode }) {
             w: 1, // Full width (col=1)
             h: 10, // Default mobile height (scaled by rowHeight later)
             minW: 1,
-            minH: 5,
+            minH: 3,
         };
 
         setPages(prev => prev.map(p => {

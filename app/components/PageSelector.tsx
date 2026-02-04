@@ -132,7 +132,7 @@ export default function PageSelector({ mode = 'sidebar' }: PageSelectorProps) {
                                 </span>
                             )}
 
-                            <div className={`flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${mode === 'topbar' ? 'ml-2' : ''}`}>
+                            <div className={`flex items-center gap-1 md:opacity-0 group-hover:opacity-100 opacity-100 transition-opacity ${mode === 'topbar' ? 'ml-2' : ''}`}>
                                 <button
                                     onClick={(e) => startEditing(e, page.id, page.name)}
                                     className="p-0.5 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"

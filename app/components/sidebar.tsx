@@ -37,7 +37,7 @@ export default function Sidebar() {
       <div className="md:hidden fixed top-0 w-full z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between h-16">
         <Logo />
         <button onClick={toggleSidebar} className="p-2 text-primary">
-            {state ? <HiChevronLeft className="h-6 w-6" /> : <HiChevronRight className="h-6 w-6" />}
+            {state ? <HiChevronRight className="h-6 w-6" /> : <HiChevronLeft className="h-6 w-6" />}
         </button>
       </div>
 
@@ -48,26 +48,26 @@ export default function Sidebar() {
       <aside
         className={
           "flex flex-col border-r dark:border-gray-700 border-gray-300 bg-white h-full dark:bg-gray-900 p-4 transition-all ease-in-out duration-500 z-30 " +
-          // Mobile: Fixed overlay
-          "fixed md:static inset-y-0 left-0 " + 
+          // Mobile: Fixed overlay on RIGHT side
+          "fixed md:static inset-y-0 right-0 md:left-auto " + 
           (state
             ? "translate-x-0 w-72"
-            : "-translate-x-full md:translate-x-0 w-10 max-h-10 m-2 md:m-0 md:max-h-full border-r-0 md:border-r rounded-lg md:rounded-none justify-center items-center")
+            : "translate-x-full md:translate-x-0 w-10 max-h-10 m-2 md:m-0 md:max-h-full border-r-0 md:border-r rounded-lg md:rounded-none justify-center items-center")
         }
       >
         <div className="flex items-center group relative min-h-[32px]">
-          {/* Maximize Button (Hidden when closed, show on hover) */}
+          {/* Maximize Button (Hidden when closed, show on hover. Adjusted to opacity-50 for visibility hint) */}
           {!state && (
-            <div className="absolute left-0 w-full h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer" onClick={toggleSidebar}>
-               <HiChevronRight className="h-8 w-8 fill-primary" />
+            <div className="absolute left-0 w-full h-full flex items-center justify-center opacity-50 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer" onClick={toggleSidebar}>
+               <HiChevronRight className={"h-8 w-8 fill-primary" + (state ?  " hidden": " block")} />
             </div>
           )}
 
           <HiChevronLeft
             onClick={toggleSidebar}
             className={
-              "h-8 w-8 fill-primary transition-all ease-in-out duration-300 cursor-pointer hidden md:block" +
-              (state ? " block" : " hidden")
+              "h-8 w-8 fill-primary transition-all ease-in-out duration-300 cursor-pointer " +
+              (state ? "hidden md:block" : "hidden")
             }
           />
           
