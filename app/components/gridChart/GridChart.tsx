@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 export default function GridChart() {
 
     const {width, containerRef, mounted} = useContainerWidth()
-    const { activeCharts, layout, updateLayout } = useChart();
+    const { activeCharts, layout, updateLayout, mobileLayout } = useChart();
     const [rowHeight, setRowHeight] = useState(30);
 
     useEffect(() => {
@@ -34,7 +34,7 @@ export default function GridChart() {
     // Generate a default mobile layout if none exists
     const currentMobileLayout = (activeCharts || []).map((chart, i) => {
         // Check if we have a saved layout item
-        const savedItem = (useChart().mobileLayout || []).find(l => l.i === chart.instanceId);
+        const savedItem = (mobileLayout || []).find(l => l.i === chart.instanceId);
         if (savedItem) return savedItem;
         
         // Default mobile item
@@ -65,7 +65,7 @@ export default function GridChart() {
         >
           {activeCharts.map((item) => (
             <div key={item.instanceId} className="relative group border border-transparent hover:border-primary rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm">
-                <div className=" p-2" style={{ height: '100%' }}>
+                <div className="p-2 opacity-0 translate-y-2 duration-500 animate-fade-in-up" style={{ height: '100%' }}>
                     <ChartContainer chartInfo={item} />
                 </div>
             </div>

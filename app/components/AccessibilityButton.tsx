@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FaSun, FaMoon, FaPlus, FaMinus, FaUniversalAccess } from "react-icons/fa";
 import { MdOutlineTextDecrease, MdOutlineTextIncrease } from "react-icons/md";
 import { useAccessibility } from "../contexts/AccessibilityContext";
@@ -9,6 +9,25 @@ export default function AccessibilityButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const { fontSize, increaseFontSize, decreaseFontSize } = useAccessibility();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     // Check localStorage or system preference
@@ -40,7 +59,7 @@ export default function AccessibilityButton() {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   return (
-    <div className="fixed bottom-4 right-4 z-100">
+    <div ref={containerRef} className="fixed bottom-4 right-4 lg:bottom-24 z-[9999]">
       {/* Main Button */}
       <button
         onClick={toggleMenu}
