@@ -8,6 +8,8 @@ import chart from "../graphics/Graphics.json";
 import AddChart from "./addChart/AddChart";
 import SearchChart from "./input/SearchChart";
 import PageSelector from "./PageSelector";
+import { HiDownload } from "react-icons/hi";
+import { exportToPDF } from "../services/exportService";
 
 function filterChartsList(charts: any[], q: string) {
   const query = q.trim().toLowerCase();
@@ -99,6 +101,16 @@ export default function Sidebar() {
               No se encontraron gráficos.
             </div>
           )}
+
+          <div className="mt-auto pt-6 border-t dark:border-gray-700 border-gray-200">
+            <button
+              onClick={() => exportToPDF('dashboard-grid', 'dashboard-saber11.pdf')}
+              className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-md active:scale-95"
+            >
+              <HiDownload className="w-5 h-5" />
+              <span>Exportar PDF</span>
+            </button>
+          </div>
         </div>
       </aside>
       

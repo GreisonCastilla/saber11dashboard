@@ -18,6 +18,25 @@ export interface Page {
     mobileLayout: Layout;
 }
 
+export const PRESET_TEMPLATES = [
+    {
+        name: "Resumen Regional y Nacional",
+        chartIds: [11, 12, 16, 17]
+    },
+    {
+        name: "Análisis por Institución",
+        chartIds: [3, 4, 13, 14]
+    },
+    {
+        name: "Factores Socioeconómicos",
+        chartIds: [7, 8, 9, 10]
+    },
+    {
+        name: "Naturaleza y Género",
+        chartIds: [1, 2, 15]
+    }
+];
+
 interface ChartContextType {
     pages: Page[];
     activePageId: string;
@@ -28,6 +47,7 @@ interface ChartContextType {
     removeChart: (instanceId: string) => void;
     updateLayout: (newLayout: Layout, isMobile?: boolean) => void;
     addPage: (name: string, predefinedCharts?: ChartInstance[], predefinedLayout?: Layout, predefinedMobileLayout?: Layout) => void;
+    addPageFromTemplate: (templateName: string, availableGraphics: any[]) => void;
     removePage: (pageId: string) => void;
     setActivePage: (pageId: string) => void;
     updatePageName: (pageId: string, newName: string) => void;
@@ -197,6 +217,66 @@ export function ChartProvider({ children }: { children: ReactNode }) {
         setActivePageId(newPageId);
     };
 
+    const addPageFromTemplate = (templateName: string, availableGraphics: any[]) => {
+        const template = PRESET_TEMPLATES.find(t => t.name === templateName);
+        if (!template) return;
+
+        const newPageId = `page-${Date.now()}`;
+        const newCharts: ChartInstance[] = [];
+        let newLayout: Layout = [];
+        let newMobileLayout: Layout = [];
+
+        template.chartIds.forEach((chartId, index) => {
+            const chartData = availableGraphics.find(g => g.id === chartId);
+            if (!chartData) return;
+
+            const instanceId = `${chartId}-${Date.now()}-${index}`;
+            newCharts.push({
+                instanceId,
+                chartId,
+                name: chartData.name,
+                typeChart: chartData.typeChart,
+            });
+
+            // Calculate layout positions
+            // 2 column layout for desktop
+            const x = (index % 2) * 6;
+            const y = Math.floor(index / 2) * 13;
+
+            // Use spread to add to layout (since Layout might be readonly in library types)
+            newLayout = [...newLayout, {
+                i: instanceId,
+                x,
+                y,
+                w: 6,
+                h: 13,
+                minW: 2,
+                minH: 3,
+            }];
+
+            newMobileLayout = [...newMobileLayout, {
+                i: instanceId,
+                x: 0,
+                y: index * 10,
+                w: 1,
+                h: 10,
+                minW: 1,
+                minH: 3,
+            }];
+        });
+
+        const newPage: Page = {
+            id: newPageId,
+            name: templateName,
+            charts: newCharts,
+            layout: newLayout,
+            mobileLayout: newMobileLayout
+        };
+
+        setPages(prev => [...prev, newPage]);
+        setActivePageId(newPageId);
+    };
+
     const removePage = (pageId: string) => {
         if (pages.length <= 1) {
             alert("Cannot delete the only page.");
@@ -241,6 +321,7 @@ export function ChartProvider({ children }: { children: ReactNode }) {
             removeChart,
             updateLayout,
             addPage,
+            addPageFromTemplate,
             removePage,
             setActivePage,
             updatePageName

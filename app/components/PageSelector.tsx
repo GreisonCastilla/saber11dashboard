@@ -1,16 +1,17 @@
 'use client';
 
-import { useChart } from "../contexts/ChartContext";
-import { HiPlus, HiX, HiPencil } from "react-icons/hi";
+import { useChart, PRESET_TEMPLATES } from "../contexts/ChartContext";
+import { HiPlus, HiX, HiPencil, HiTemplate, HiDocumentText } from "react-icons/hi";
 import { useState } from "react";
 import Modal from "./ui/Modal";
+import graphics from "../graphics/Graphics.json";
 
 interface PageSelectorProps {
     mode?: 'sidebar' | 'topbar';
 }
 
 export default function PageSelector({ mode = 'sidebar' }: PageSelectorProps) {
-    const { pages, activePageId, setActivePage, addPage, removePage, updatePageName } = useChart();
+    const { pages, activePageId, setActivePage, addPage, addPageFromTemplate, removePage, updatePageName } = useChart();
     const [isEditing, setIsEditing] = useState<string | null>(null);
     const [editName, setEditName] = useState("");
     
@@ -19,6 +20,8 @@ export default function PageSelector({ mode = 'sidebar' }: PageSelectorProps) {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [pageToDelete, setPageToDelete] = useState<string | null>(null);
     const [newPageName, setNewPageName] = useState("");
+    const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+    const [creationMode, setCreationMode] = useState<'blank' | 'template'>('blank');
 
     const handleAddPage = () => {
         setNewPageName("");
@@ -26,7 +29,10 @@ export default function PageSelector({ mode = 'sidebar' }: PageSelectorProps) {
     };
 
     const confirmAddPage = () => {
-        if (newPageName.trim()) {
+        if (creationMode === 'template' && selectedTemplate) {
+            addPageFromTemplate(selectedTemplate, graphics);
+            setIsAddModalOpen(false);
+        } else if (newPageName.trim()) {
             addPage(newPageName.trim());
             setIsAddModalOpen(false);
         }
@@ -166,21 +172,71 @@ export default function PageSelector({ mode = 'sidebar' }: PageSelectorProps) {
             {/* Modal Crear Página */}
             <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Nueva Página">
                 <div className="flex flex-col gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Nombre de la página
-                        </label>
-                        <input
-                            autoFocus
-                            type="text"
-                            value={newPageName}
-                            onChange={(e) => setNewPageName(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && confirmAddPage()}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-700 dark:text-white"
-                            placeholder="Ej. Análisis Mensual"
-                        />
+                    <div className="flex gap-4 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                        <button
+                            onClick={() => setCreationMode('blank')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                                creationMode === 'blank' 
+                                    ? "bg-white dark:bg-gray-700 text-primary shadow-sm" 
+                                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                            }`}
+                        >
+                            <HiDocumentText className="w-4 h-4" />
+                            Página en blanco
+                        </button>
+                        <button
+                            onClick={() => setCreationMode('template')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                                creationMode === 'template' 
+                                    ? "bg-white dark:bg-gray-700 text-primary shadow-sm" 
+                                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                            }`}
+                        >
+                            <HiTemplate className="w-4 h-4" />
+                            Usar Plantilla
+                        </button>
                     </div>
-                    <div className="flex justify-end gap-2">
+
+                    {creationMode === 'blank' ? (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Nombre de la página
+                            </label>
+                            <input
+                                autoFocus
+                                type="text"
+                                value={newPageName}
+                                onChange={(e) => setNewPageName(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && confirmAddPage()}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-700 dark:text-white"
+                                placeholder="Ej. Análisis Mensual"
+                            />
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-2">
+                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Selecciona una configuración predeterminada
+                            </label>
+                            {PRESET_TEMPLATES.map((template) => (
+                                <div
+                                    key={template.name}
+                                    onClick={() => setSelectedTemplate(template.name)}
+                                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                        selectedTemplate === template.name
+                                            ? "border-primary bg-primary/5 text-primary"
+                                            : "border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600"
+                                    }`}
+                                >
+                                    <h4 className="font-semibold text-sm">{template.name}</h4>
+                                    <p className="text-[10px] text-gray-400 mt-1 uppercase">
+                                        Incluye {template.chartIds.length} gráficos relacionados
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="flex justify-end gap-2 mt-2">
                         <button
                             onClick={() => setIsAddModalOpen(false)}
                             className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -190,7 +246,7 @@ export default function PageSelector({ mode = 'sidebar' }: PageSelectorProps) {
                         <button
                             onClick={confirmAddPage}
                             className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors shadow-sm"
-                            disabled={!newPageName.trim()}
+                            disabled={creationMode === 'blank' ? !newPageName.trim() : !selectedTemplate}
                         >
                             Crear Página
                         </button>

@@ -113,7 +113,7 @@ export default function BarChartSelect({ data, options, comparisonItemName, onOp
     };
 
     if (!data || data.length === 0) {
-        return <div className="p-4 text-center">No data available</div>;
+        return <div className="p-4 text-center">No hay datos disponibles</div>;
     }
 
     return (
@@ -166,7 +166,7 @@ export default function BarChartSelect({ data, options, comparisonItemName, onOp
                     <Bar options={chartOptions} data={chartData} />
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-400">
-                        No data found for {selectedOption} in {selectedYear}
+                        No se encontraron datos para {selectedOption} en {selectedYear}
                     </div>
                 )}
             </div>

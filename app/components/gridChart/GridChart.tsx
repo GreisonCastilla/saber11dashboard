@@ -52,7 +52,7 @@ export default function GridChart() {
     const currentLayout = isMobile ? currentMobileLayout : layout;
 
     return (
-    <div ref={containerRef} className="w-full min-h-full">
+    <div ref={containerRef} id="dashboard-grid" className="w-full min-h-full">
      {mounted && (
         <ReactGridLayout
           layout={currentLayout}

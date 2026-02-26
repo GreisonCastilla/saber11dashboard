@@ -15,7 +15,7 @@ export default function SearchableSelect({
     value,
     onChange,
     label,
-    placeholder = 'Search...'
+    placeholder = 'Buscar...'
 }: SearchableSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -56,7 +56,7 @@ export default function SearchableSelect({
                 className="w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md bg-transparent cursor-pointer flex justify-between items-center"
                 onClick={() => setIsOpen(!isOpen)}
             >
-                <span className="truncate">{value || 'Select option'}</span>
+                <span className="truncate">{value || 'Seleccionar opción'}</span>
                 <span className="text-gray-400 text-xs ml-2">▼</span>
             </div>
 
@@ -88,7 +88,7 @@ export default function SearchableSelect({
                             ))
                         ) : (
                             <div className="p-3 text-xs text-gray-400 text-center">
-                                No results found
+                                No se encontraron resultados
                             </div>
                         )}
                     </div>

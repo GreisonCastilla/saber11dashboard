@@ -18,7 +18,9 @@ import {
     processBolivarVsNationalGlobal,
     processEvolutionGlobal,
     processEvolutionAreas,
-    processByGender
+    processByGender,
+    processAveragesBolivar,
+    processAveragesColombia
 } from "../../services/dataProcessor";
 import BarChartSelect from "./BarChartSelect";
 import BarChartCompare from "./BarChartCompare";
@@ -27,6 +29,7 @@ import BarChartHorizontalSelector from "./BarChartHorizontalSelector";
 import BarChartCategories from "./BarChartCategories";
 import LineChartSelect from "./LineChartSelect";
 import PieChart from "./PieChart";
+import InfoChart from "./InfoChart";
 
 export default function ChartContainer({
      chartInfo
@@ -169,6 +172,10 @@ export default function ChartContainer({
             setProcessedData(processEvolutionAreas(data));
         } else if (chartInfo.chartId === 15) {
             setProcessedData(processByGender(data));
+        } else if (chartInfo.chartId === 16) {
+            setProcessedData(processAveragesBolivar(data));
+        } else if (chartInfo.chartId === 17) {
+            setProcessedData(processAveragesColombia(data));
         } else {
             setProcessedData(processByNaturaleza(data));
         }
@@ -186,7 +193,7 @@ export default function ChartContainer({
     }, [chartInfo.chartId, bolivarSchools, processedData]);
 
     if (!processedData.length) {
-        return <div>Loading...</div>;
+        return <div className="p-8 text-center animate-pulse">Cargando...</div>;
     }
 
     return (
@@ -285,6 +292,11 @@ export default function ChartContainer({
                     />
                 ) : chartInfo.chartId === 15 ? (
                     <PieChart 
+                        data={processedData} 
+                        onYearChange={(opt, year) => handleYearChangeGeneral(year)} 
+                    />
+                ) : chartInfo.chartId === 16 || chartInfo.chartId === 17 ? (
+                    <InfoChart 
                         data={processedData} 
                         onYearChange={(opt, year) => handleYearChangeGeneral(year)} 
                     />

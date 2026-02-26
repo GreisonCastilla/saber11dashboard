@@ -132,7 +132,7 @@ export default function BarChartCategories({ data, isGlobal = false, isHorizonta
     };
 
     if (!data || data.length === 0) {
-        return <div className="p-4 text-center">No data available</div>;
+        return <div className="p-4 text-center">No hay datos disponibles</div>;
     }
 
     return (
@@ -141,14 +141,14 @@ export default function BarChartCategories({ data, isGlobal = false, isHorizonta
                 <div className="flex flex-wrap items-end gap-6">
                     {!isGlobal && areas.length > 0 && (
                         <SearchableSelect
-                            label="Area"
+                            label="Área"
                             options={areas}
                             value={areas[selectedAreaIndex]}
                             onChange={(value) => {
                                 const index = areas.indexOf(value);
                                 if (index !== -1) setSelectedAreaIndex(index);
                             }}
-                            placeholder="Select area..."
+                            placeholder="Seleccionar área..."
                         />
                     )}
 

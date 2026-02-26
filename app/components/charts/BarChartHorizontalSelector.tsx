@@ -108,7 +108,7 @@ export default function BarChartHorizontalSelector({ data, options, comparisonIt
     };
 
     if (!data || data.length === 0) {
-        return <div className="p-4 text-center">No data available</div>;
+        return <div className="p-4 text-center">No hay datos disponibles</div>;
     }
 
     return (

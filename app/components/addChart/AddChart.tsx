@@ -2,6 +2,7 @@ import { MdOutlineBarChart } from "react-icons/md";
 import { MdPieChart } from "react-icons/md";
 import { MdOutlineShowChart } from "react-icons/md";
 import { RiBarChartHorizontalFill } from "react-icons/ri";
+import { MdInfo } from "react-icons/md";
 
 import { useChart } from "../../contexts/ChartContext";
 
@@ -18,6 +19,7 @@ export default function AddChart({ chart, index }: { chart: { name: string; type
             {chart.typeChart === "HorizontalBar" && <RiBarChartHorizontalFill className="h-6 w-6 fill-primary" />}
             {chart.typeChart === "line" && <MdOutlineShowChart className="h-6 w-6 fill-primary" />}
             {chart.typeChart === "pie" && <MdPieChart className="h-6 w-6 fill-primary" />}
+            {chart.typeChart === "info" && <MdInfo className="h-6 w-6 fill-primary" />}
             <div className="font-semibold text-xs text-wrap">{chart.name}</div>
             <div className="ml-auto">
             </div>

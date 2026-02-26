@@ -70,11 +70,11 @@ export const processByNaturaleza = (data: any[]): ProcessedData[] => {
         return {
             name: group.naturaleza,
             label: [
-                'Ingles',
-                'Matematicas',
+                'Inglés',
+                'Matemáticas',
                 'Sociales',
                 'Ciencias naturales',
-                'Lectura critica'
+                'Lectura crítica'
             ],
             datos: averages,
             PERIODO: group.periodo
@@ -927,4 +927,143 @@ export const processByGender = (data: any[]): any[] => {
         })),
         PERIODO: group.periodo
     }));
+};
+
+export const processAveragesBolivar = (data: any[]): ProcessedData[] => {
+    const groups: {
+        [key: string]: {
+            sum: { [key: string]: number },
+            count: number,
+            periodo: string
+        }
+    } = {};
+
+    const subjects = [
+        'PUNT_INGLES',
+        'PUNT_MATEMATICAS',
+        'PUNT_SOCIALES_CIUDADANAS',
+        'PUNT_C_NATURALES',
+        'PUNT_LECTURA_CRITICA',
+        'PUNT_GLOBAL'
+    ];
+
+    if (!data || !Array.isArray(data)) return [];
+
+    data.forEach(item => {
+        const rawPeriodo = String(item.periodo || item.PERIODO || '');
+        if (rawPeriodo.length < 4) return;
+        const periodo = rawPeriodo.length === 5 ? rawPeriodo.slice(0, -1) : rawPeriodo;
+
+        const isBolivar = (item.cole_depto_ubicacion || item.COLE_DEPTO_UBICACION) === 'BOLIVAR';
+        if (!isBolivar) return;
+
+        if (!groups[periodo]) {
+            groups[periodo] = {
+                sum: {
+                    PUNT_INGLES: 0,
+                    PUNT_MATEMATICAS: 0,
+                    PUNT_SOCIALES_CIUDADANAS: 0,
+                    PUNT_C_NATURALES: 0,
+                    PUNT_LECTURA_CRITICA: 0,
+                    PUNT_GLOBAL: 0
+                },
+                count: 0,
+                periodo
+            };
+        }
+
+        groups[periodo].count++;
+        subjects.forEach(sub => {
+            const val = parseFloat(item[sub.toLowerCase()]) || parseFloat(item[sub]) || 0;
+            groups[periodo].sum[sub] += val;
+        });
+    });
+
+    return Object.values(groups).map(group => {
+        const averages = subjects.map(sub => {
+            return parseFloat((group.sum[sub] / group.count).toFixed(2));
+        });
+
+        return {
+            name: "BOLIVAR",
+            label: [
+                'Inglés',
+                'Matemáticas',
+                'Sociales',
+                'Ciencias naturales',
+                'Lectura crítica',
+                'Global'
+            ],
+            datos: averages,
+            PERIODO: group.periodo
+        };
+    });
+};
+
+export const processAveragesColombia = (data: any[]): ProcessedData[] => {
+    const groups: {
+        [key: string]: {
+            sum: { [key: string]: number },
+            count: number,
+            periodo: string
+        }
+    } = {};
+
+    const subjects = [
+        'PUNT_INGLES',
+        'PUNT_MATEMATICAS',
+        'PUNT_SOCIALES_CIUDADANAS',
+        'PUNT_C_NATURALES',
+        'PUNT_LECTURA_CRITICA',
+        'PUNT_GLOBAL'
+    ];
+
+    if (!data || !Array.isArray(data)) return [];
+
+    data.forEach(item => {
+        const rawPeriodo = String(item.periodo || item.PERIODO || '');
+        if (rawPeriodo.length < 4) return;
+        const periodo = rawPeriodo.length === 5 ? rawPeriodo.slice(0, -1) : rawPeriodo;
+
+        if (!groups[periodo]) {
+            groups[periodo] = {
+                sum: {
+                    PUNT_INGLES: 0,
+                    PUNT_MATEMATICAS: 0,
+                    PUNT_SOCIALES_CIUDADANAS: 0,
+                    PUNT_C_NATURALES: 0,
+                    PUNT_LECTURA_CRITICA: 0,
+                    PUNT_GLOBAL: 0
+                },
+                count: 0,
+                periodo
+            };
+        }
+
+        groups[periodo].count++;
+        subjects.forEach(sub => {
+            const val = parseFloat(item[sub.toLowerCase()]) || parseFloat(item[sub]) || 0;
+            groups[periodo].sum[sub] += val;
+        });
+    });
+
+    return Object.values(groups).map(group => {
+        const averages = subjects.map(sub => {
+            return parseFloat((group.sum[sub] / group.count).toFixed(2));
+        });
+
+        return {
+            name: "COLOMBIA",
+            label: [
+                'Inglés',
+                'Matemáticas',
+                'Sociales',
+                'Ciencias naturales',
+                'Lectura crítica',
+                'Global'
+            ],
+            datos: averages,
+            PERIODO: group.periodo
+        };
+    });
 };

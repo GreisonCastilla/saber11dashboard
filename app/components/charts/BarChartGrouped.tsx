@@ -104,7 +104,7 @@ export default function BarChartGrouped({ data, onYearChange }: BarChartGroupedP
     };
 
     if (!data || data.length === 0) {
-        return <div className="p-4 text-center">No data available</div>;
+        return <div className="p-4 text-center">No hay datos disponibles</div>;
     }
 
     return (
@@ -142,7 +142,7 @@ export default function BarChartGrouped({ data, onYearChange }: BarChartGroupedP
                     <Bar options={chartOptions} data={chartData} />
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-400">
-                        No data found for {selectedYear}
+                        No se encontraron datos para {selectedYear}
                     </div>
                 )}
             </div>
