@@ -1,5 +1,6 @@
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
+import { showToast } from 'nextjs-toast-notify';
 
 export const exportToPDF = async (elementId: string, fileName: string = 'dashboard.pdf') => {
     const element = document.getElementById(elementId);
@@ -32,7 +33,10 @@ export const exportToPDF = async (elementId: string, fileName: string = 'dashboa
 
         pdf.addImage(dataUrl, 'PNG', 0, 0, width, height);
         pdf.save(fileName);
+
+        showToast.success("PDF exportado exitosamente", { position: "bottom-right" });
     } catch (error) {
         console.error('Error generating PDF:', error);
+        showToast.error("Error al exportar el PDF", { position: "bottom-right" });
     }
 };

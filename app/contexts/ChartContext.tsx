@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Layout } from 'react-grid-layout';
+import { showToast } from 'nextjs-toast-notify';
 
 export interface ChartInstance {
     instanceId: string;
@@ -173,6 +174,8 @@ export function ChartProvider({ children }: { children: ReactNode }) {
             }
             return p;
         }));
+        
+        showToast.success("Gráfico agregado al dashboard", { position: "bottom-right" });
     };
 
     const removeChart = (instanceId: string) => {
@@ -190,6 +193,8 @@ export function ChartProvider({ children }: { children: ReactNode }) {
             }
             return p;
         }));
+        
+        showToast.info("Gráfico eliminado del dashboard", { position: "bottom-right" });
     };
 
     const updateLayout = (newLayout: Layout, isMobile: boolean = false) => {
@@ -215,6 +220,7 @@ export function ChartProvider({ children }: { children: ReactNode }) {
         };
         setPages(prev => [...prev, newPage]);
         setActivePageId(newPageId);
+        showToast.success("Página agregada exitosamente", { position: "bottom-right" });
     };
 
     const addPageFromTemplate = (templateName: string, availableGraphics: any[]) => {
@@ -275,11 +281,12 @@ export function ChartProvider({ children }: { children: ReactNode }) {
 
         setPages(prev => [...prev, newPage]);
         setActivePageId(newPageId);
+        showToast.success("Página desde plantilla agregada exitosamente", { position: "bottom-right" });
     };
 
     const removePage = (pageId: string) => {
         if (pages.length <= 1) {
-            alert("Cannot delete the only page.");
+            showToast.error("No se puede eliminar la única página", { position: "bottom-right" });
             return;
         }
         const newPages = pages.filter(p => p.id !== pageId);
@@ -287,6 +294,7 @@ export function ChartProvider({ children }: { children: ReactNode }) {
         if (activePageId === pageId) {
             setActivePageId(newPages[0].id);
         }
+        showToast.info("Página eliminada", { position: "bottom-right" });
     };
 
     const setActivePage = (pageId: string) => {
