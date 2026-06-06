@@ -137,7 +137,7 @@ export default function BarChartGrouped({ data, onYearChange }: BarChartGroupedP
                 </div>
             </div>
             
-            <div className="flex-1 w-full min-h-[300px]">
+            <div className="flex-grow w-full min-h-0 relative">
                 {currentItems.length > 0 ? (
                     <Bar options={chartOptions} data={chartData} />
                 ) : (

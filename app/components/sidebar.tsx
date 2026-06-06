@@ -81,6 +81,7 @@ export default function Sidebar() {
         </div>
 
         <div
+          id="tutorial-sidebar-charts"
           className={
             "mt-6 flex flex-col gap-2 max-h-full transition-all ease-in-out duration-300 overflow-hidden" +
             (state ? " block" : " hidden")
@@ -102,13 +103,20 @@ export default function Sidebar() {
             </div>
           )}
 
-          <div className="mt-auto pt-6 border-t dark:border-gray-700 border-gray-200">
+          <div className="mt-auto pt-6 border-t dark:border-gray-700 border-gray-200 flex flex-col gap-2">
             <button
+              id="tutorial-export-pdf"
               onClick={() => exportToPDF('dashboard-grid', 'dashboard-saber11.pdf')}
               className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-md active:scale-95"
             >
               <HiDownload className="w-5 h-5" />
               <span>Exportar PDF</span>
+            </button>
+            <button
+              onClick={() => window.dispatchEvent(new Event('trigger-tutorial'))}
+              className="w-full flex items-center justify-center gap-2 py-1.5 px-4 border border-primary text-primary dark:text-blue-400 dark:border-blue-400 text-xs font-semibold rounded-lg hover:bg-primary/5 dark:hover:bg-blue-400/10 transition-all active:scale-95 cursor-pointer"
+            >
+              <span>Ver Recorrido Tutorial</span>
             </button>
           </div>
         </div>

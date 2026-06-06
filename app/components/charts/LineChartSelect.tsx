@@ -149,7 +149,7 @@ export default function LineChartSelect({ data, options, isGlobal = false, onOpt
                 </div>
             </div>
             
-            <div className="flex-1 w-full min-h-[300px]">
+            <div className="flex-grow w-full min-h-0 relative">
                 {data.length > 0 ? (
                     <Line options={chartOptions} data={chartData} />
                 ) : (

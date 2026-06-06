@@ -45,25 +45,33 @@ export default function PieChart({ data, onYearChange }: PieChartProps) {
     const chartData = useMemo(() => {
         if (!currentData) return { labels: [], datasets: [] };
 
+        const colors = currentData.data.map(d => {
+            const labelUpper = d.label.trim().toUpperCase();
+            if (labelUpper === 'F' || labelUpper === 'FEMENINO' || labelUpper === 'FEMALE') {
+                return {
+                    bg: 'rgba(255, 99, 132, 0.5)', // Rojo
+                    border: 'rgba(255, 99, 132, 1)'
+                };
+            } else if (labelUpper === 'M' || labelUpper === 'MASCULINO' || labelUpper === 'MALE') {
+                return {
+                    bg: 'rgba(53, 162, 235, 0.5)', // Azul
+                    border: 'rgba(53, 162, 235, 1)'
+                };
+            } else {
+                return {
+                    bg: 'rgba(201, 203, 207, 0.5)', // Gris de reserva
+                    border: 'rgba(201, 203, 207, 1)'
+                };
+            }
+        });
+
         return {
             labels: currentData.data.map(d => d.label),
             datasets: [
                 {
                     data: currentData.data.map(d => d.percentage),
-                    backgroundColor: [
-                        'rgba(53, 162, 235, 0.5)',
-                        'rgba(255, 99, 132, 0.5)',
-                        'rgba(75, 192, 192, 0.5)',
-                        'rgba(255, 205, 86, 0.5)',
-                        'rgba(153, 102, 255, 0.5)',
-                    ],
-                    borderColor: [
-                        'rgba(53, 162, 235, 1)',
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(255, 205, 86, 1)',
-                        'rgba(153, 102, 255, 1)',
-                    ],
+                    backgroundColor: colors.map(c => c.bg),
+                    borderColor: colors.map(c => c.border),
                     borderWidth: 1,
                 },
             ],
@@ -83,6 +91,7 @@ export default function PieChart({ data, onYearChange }: PieChartProps) {
             },
             tooltip: {
                 callbacks: {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     label: (context: any) => {
                         const label = context.label || '';
                         const value = context.parsed || 0;
@@ -99,7 +108,7 @@ export default function PieChart({ data, onYearChange }: PieChartProps) {
 
     return (
         <div className="w-full h-full flex flex-col p-4 bg-white dark:bg-gray-900 rounded-lg">
-            <div className="flex-1 w-full min-h-[300px] mb-4">
+            <div className="flex-grow w-full min-h-0 relative mb-4">
                 {currentData ? (
                     <Pie options={chartOptions} data={chartData} />
                 ) : (

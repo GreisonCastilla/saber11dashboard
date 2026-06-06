@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Layout } from 'react-grid-layout';
-import { showToast } from 'nextjs-toast-notify';
+import { showToast } from '../services/toast';
 
 export interface ChartInstance {
     instanceId: string;
@@ -110,23 +110,23 @@ export function ChartProvider({ children }: { children: ReactNode }) {
         const updatedPages = pages.map(page => ({
             ...page,
             // @ts-ignore
-            layout: page.layout.map(l => ({ ...l, minW: 2, minH: 3 })),
+            layout: page.layout.map(l => ({ ...l, minW: 1, minH: 2 })),
             // @ts-ignore
-            mobileLayout: (page.mobileLayout || []).map(l => ({ ...l, minW: 1, minH: 3 }))
+            mobileLayout: (page.mobileLayout || []).map(l => ({ ...l, minW: 1, minH: 2 }))
         }));
 
-        // Only update if there are changes to avoid loop (check first item's minW as proxy)
+        // Only update if there are changes to avoid loop
         const needsUpdate = pages.some(p => 
             // @ts-ignore
-            p.layout.some(l => l.minW > 2 || l.minH > 3) || 
+            p.layout.some(l => l.minW > 1 || l.minH > 2) || 
             // @ts-ignore
-            (p.mobileLayout || []).some(l => l.minH > 3)
+            (p.mobileLayout || []).some(l => l.minH > 2)
         );
 
         if (needsUpdate) {
             setPages(updatedPages);
         }
-    }, [isLoaded]);
+    }, [isLoaded, pages]);
 
     const getActivePage = () => pages.find(p => p.id === activePageId) || pages[0];
 
@@ -141,24 +141,31 @@ export function ChartProvider({ children }: { children: ReactNode }) {
             typeChart: chartData.typeChart,
         };
 
+        const activePage = pages.find(p => p.id === activePageId);
+        const currentChartsCount = activePage?.charts.length || 0;
+        const w = 4;
+        const h = 13;
+        const x = (currentChartsCount * w) % 12;
+        const y = Math.floor((currentChartsCount * w) / 12) * h;
+
         const newDesktopItem = {
             i: instanceId,
-            x: 0,
-            y: Infinity,
-            w: 4,
-            h: 13,
-            minW: 2,
-            minH: 3,
+            x,
+            y,
+            w,
+            h,
+            minW: 1,
+            minH: 2,
         };
         
         const newMobileItem = {
             i: instanceId,
             x: 0,
-            y: Infinity,
+            y: currentChartsCount * 10,
             w: 1, // Full width (col=1)
             h: 10, // Default mobile height (scaled by rowHeight later)
             minW: 1,
-            minH: 3,
+            minH: 2,
         };
 
         setPages(prev => prev.map(p => {
@@ -256,8 +263,8 @@ export function ChartProvider({ children }: { children: ReactNode }) {
                 y,
                 w: 6,
                 h: 13,
-                minW: 2,
-                minH: 3,
+                minW: 1,
+                minH: 2,
             }];
 
             newMobileLayout = [...newMobileLayout, {
@@ -267,7 +274,7 @@ export function ChartProvider({ children }: { children: ReactNode }) {
                 w: 1,
                 h: 10,
                 minW: 1,
-                minH: 3,
+                minH: 2,
             }];
         });
 

@@ -179,7 +179,7 @@ export default function BarChartCategories({ data, isGlobal = false, isHorizonta
                 </div>
             </div>
             
-            <div className="flex-1 w-full min-h-[300px]">
+            <div className="flex-grow w-full min-h-0 relative">
                 <Bar options={chartOptions} data={chartData} />
             </div>
         </div>

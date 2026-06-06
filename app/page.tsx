@@ -3,6 +3,7 @@ import Sidebar from "./components/sidebar";
 import Footer from "./components/footer";
 import GridChart from "./components/gridChart/GridChart";
 import PageSelector from "./components/PageSelector";
+import Tutorial from "./components/Tutorial";
 import { fetchDatos } from "./api/data/query";
 import { useEffect } from "react";
 import { dbService } from "./services/indexedDB";
@@ -13,6 +14,13 @@ export default function Home() {
     fetchDatos("SELECT *").then(async (data) => {
       try {
         const parsedData = JSON.parse(data);
+
+        if (!Array.isArray(parsedData)) {
+          console.error("Failed to process data: API response is not an array.", parsedData);
+          return;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const formattedData = parsedData.map((item: any) => ({
           ...item,
           PERIODO: Number(item.PERIODO),
@@ -33,22 +41,23 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex min-h-screen w-full items-left justify-left bg-gray-500 font-sans dark:bg-slate-500">
+    <div className="flex h-screen w-full overflow-hidden bg-gray-500 font-sans dark:bg-slate-500">
       
-      <main className="flex flex-col md:flex-row w-full justify-left bg-slate-300 dark:bg-slate-800 sm:items-start">
+      <main className="flex flex-col md:flex-row w-full h-full bg-slate-300 dark:bg-slate-800">
         <Sidebar />
-        <div className="flex flex-col w-full h-full min-h-screen">
-          <div className="hidden md:block">
+        <div className="flex flex-col flex-1 h-full overflow-hidden">
+          <div className="hidden md:block shrink-0">
             <PageSelector mode="topbar" />
           </div>
-          <div className="flex flex-1 grow">
+          <div className="flex-grow overflow-y-auto p-4 md:p-6" id="dashboard-scroll-container">
             <GridChart />
           </div>
-          <Footer />
+          <div className="shrink-0">
+            <Footer />
+          </div>
         </div>
-        
-        
       </main>
+      <Tutorial />
     </div>
   );
 }

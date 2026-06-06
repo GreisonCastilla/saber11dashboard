@@ -103,7 +103,7 @@ export default function PageSelector({ mode = 'sidebar' }: PageSelectorProps) {
 
     return (
         <>
-            <div className={containerClass}>
+            <div id="tutorial-page-selector" className={containerClass}>
                 <div className={headerClass}>
                     <span className="font-semibold text-sm text-gray-700 dark:text-gray-200">Páginas</span>
                     <button

@@ -31,22 +31,22 @@
   },
   {
     "id": 7,
-    "name": "Estrato por promedio áreas",
+    "name": "Promedio por estrato (áreas)",
     "typeChart": "bar"
   },
   {
     "id": 8,
-    "name": "Estrato por promedio global",
+    "name": "Promedio por estrato (global)",
     "typeChart": "bar"
   },
   {
     "id": 9,
-    "name": "Educación padre por promedio global",
+    "name": "Promedio por educación de los padres",
     "typeChart": "bar"
   },
   {
     "id": 10,
-    "name": "Educación madre por promedio global",
+    "name": "Promedio por educación de la madre",
     "typeChart": "bar"
   },
   {

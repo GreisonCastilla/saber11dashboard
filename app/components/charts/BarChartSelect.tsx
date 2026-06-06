@@ -161,7 +161,7 @@ export default function BarChartSelect({ data, options, comparisonItemName, onOp
                 </div>
             </div>
             
-            <div className="flex-1 w-full min-h-[300px]">
+            <div className="flex-grow w-full min-h-0 relative">
                 {currentItem ? (
                     <Bar options={chartOptions} data={chartData} />
                 ) : (

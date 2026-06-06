@@ -1,6 +1,6 @@
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
-import { showToast } from 'nextjs-toast-notify';
+import { showToast } from './toast';
 
 export const exportToPDF = async (elementId: string, fileName: string = 'dashboard.pdf') => {
     const element = document.getElementById(elementId);
