@@ -11,7 +11,9 @@ import {
     Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { useYearRange } from './useYearRange';
 import SearchableSelect from '../ui/SearchableSelect';
+import { cleanLabel } from '../../services/textUtils';
 
 ChartJS.register(
     CategoryScale,
@@ -24,12 +26,13 @@ ChartJS.register(
 
 interface DataItem {
     name: string;
-    label: string[];
-    datos: number[];
+    label?: string[];
+    datos?: number[];
     PERIODO: string;
 }
 
 interface BarChartSelectProps {
+    years?: number[];
     data: DataItem[];
     options: string[]; // Corresponds to 'name' in DataItem
     comparisonItemName?: string; // e.g., 'PROMEDIO BOLIVAR'
@@ -37,17 +40,24 @@ interface BarChartSelectProps {
     onYearChange?: (option: string, year: number) => void;
 }
 
-export default function BarChartSelect({ data, options, comparisonItemName, onOptionSelect, onYearChange }: BarChartSelectProps) {
+export default function BarChartSelect({ data, options, comparisonItemName, onOptionSelect, onYearChange, years }: BarChartSelectProps) {
     // State for selections
-    const [selectedYear, setSelectedYear] = useState<number>(2014);
-    const [selectedOption, setSelectedOption] = useState<string>(options[0] || '');
+    const { minYear, maxYear, selectedYear, setSelectedYear } = useYearRange(years);
+    // Elección explícita del usuario; mientras no la haya, se usa un valor con datos.
+    const [eleccion, setEleccion] = useState<string | null>(null);
 
-    // Reset option if options prop changes
-    React.useEffect(() => {
-        if (options.length > 0 && !options.includes(selectedOption)) {
-            setSelectedOption(options[0]);
-        }
-    }, [options, selectedOption]);
+    // No todos los colegios tienen datos en todos los años (36 de 506 no llegan al
+    // último), así que por defecto se muestra el primero que sí los tenga.
+    const selectedOption = useMemo(() => {
+        if (eleccion && options.includes(eleccion)) return eleccion;
+        const conDatos = new Set(
+            data
+                .filter((item) => String(item.PERIODO) === String(selectedYear))
+                .map((item) => item.name)
+        );
+        return options.find((option) => conDatos.has(option)) ?? options[0] ?? '';
+    }, [eleccion, options, data, selectedYear]);
+
 
     // Find the specific item based on selection
     const currentItem = useMemo(() => {
@@ -73,8 +83,8 @@ export default function BarChartSelect({ data, options, comparisonItemName, onOp
 
         const datasets = [
             {
-                label: selectedOption,
-                data: currentItem.datos,
+                label: cleanLabel(selectedOption),
+                data: currentItem.datos ?? [],
                 backgroundColor: 'rgba(53, 162, 235, 0.5)',
             },
         ];
@@ -82,13 +92,13 @@ export default function BarChartSelect({ data, options, comparisonItemName, onOp
         if (comparisonItem) {
             datasets.push({
                 label: comparisonItemName || 'Comparison',
-                data: comparisonItem.datos,
+                data: comparisonItem.datos ?? [],
                 backgroundColor: 'rgba(255, 99, 132, 0.5)',
             });
         }
 
         return {
-            labels: currentItem.label,
+            labels: currentItem.label ?? [],
             datasets: datasets,
         };
     }, [currentItem, comparisonItem, selectedOption, comparisonItemName]);
@@ -102,7 +112,7 @@ export default function BarChartSelect({ data, options, comparisonItemName, onOp
             },
             title: {
                 display: true,
-                text: `${selectedOption} - ${selectedYear}`,
+                text: `${cleanLabel(selectedOption)} - ${selectedYear}`,
             },
         },
         scales: {
@@ -127,7 +137,7 @@ export default function BarChartSelect({ data, options, comparisonItemName, onOp
                         options={options}
                         value={selectedOption}
                         onChange={(value) => {
-                            setSelectedOption(value);
+                            setEleccion(value);
                             if (onOptionSelect) onOptionSelect(value, selectedYear);
                         }}
                         placeholder="Seleccionar colegio..."
@@ -142,8 +152,8 @@ export default function BarChartSelect({ data, options, comparisonItemName, onOp
                         <input
                             id="year-slider"
                             type="range"
-                            min="2014"
-                            max="2022"
+                            min={minYear}
+                            max={maxYear}
                             step="1"
                             value={selectedYear}
                             onChange={(e) => {
@@ -154,8 +164,8 @@ export default function BarChartSelect({ data, options, comparisonItemName, onOp
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
                         />
                         <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                            <span>2014</span>
-                            <span>2022</span>
+                            <span>{minYear}</span>
+                            <span>{maxYear}</span>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -11,6 +11,8 @@ import {
     Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { useYearRange } from './useYearRange';
+import { cleanLabel } from '../../services/textUtils';
 
 ChartJS.register(
     CategoryScale,
@@ -23,8 +25,8 @@ ChartJS.register(
 
 interface DataItem {
     name: string;
-    label: string[];
-    datos: number[];
+    label?: string[];
+    datos?: number[];
     PERIODO: string;
 }
 
@@ -33,13 +35,14 @@ interface CategoryGroup {
 }
 
 interface BarChartGroupedProps {
+    years?: number[];
     data: DataItem[];
     onYearChange?: (year: number) => void;
 }
 
-export default function BarChartGrouped({ data, onYearChange }: BarChartGroupedProps) {
+export default function BarChartGrouped({ data, onYearChange, years }: BarChartGroupedProps) {
     // State for selections
-    const [selectedYear, setSelectedYear] = useState<number>(2014);
+    const { minYear, maxYear, selectedYear, setSelectedYear } = useYearRange(years);
 
     // Filter items based on selection
     const currentItems = useMemo(() => {
@@ -57,11 +60,11 @@ export default function BarChartGrouped({ data, onYearChange }: BarChartGroupedP
         }
 
         // Use labels from the first item (assuming all have same structure)
-        const labels = currentItems[0].label;
+        const labels = currentItems[0].label ?? [];
 
         const datasets = currentItems.map(item => {
             let color = 'rgba(128, 128, 128, 0.5)'; // Default grey
-            const upperName = item.name.toUpperCase();
+            const upperName = String(item.name ?? '').toUpperCase();
             if (upperName === 'OFICIAL' || upperName === 'PROMEDIO BOLIVAR') {
                 color = 'rgba(53, 162, 235, 0.5)'; // Blue
             } else if (upperName === 'NO OFICIAL' || upperName === 'PROMEDIO COLOMBIA') {
@@ -69,8 +72,8 @@ export default function BarChartGrouped({ data, onYearChange }: BarChartGroupedP
             }
             
             return {
-                label: item.name,
-                data: item.datos,
+                label: cleanLabel(item.name),
+                data: item.datos ?? [],
                 backgroundColor: color,
             };
         });
@@ -119,8 +122,8 @@ export default function BarChartGrouped({ data, onYearChange }: BarChartGroupedP
                     <input
                         id="year-slider-grouped"
                         type="range"
-                        min="2014"
-                        max="2022"
+                        min={minYear}
+                        max={maxYear}
                         step="1"
                         value={selectedYear}
                         onChange={(e) => {
@@ -131,8 +134,8 @@ export default function BarChartGrouped({ data, onYearChange }: BarChartGroupedP
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
                     />
                     <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                        <span>2014</span>
-                        <span>2022</span>
+                        <span>{minYear}</span>
+                        <span>{maxYear}</span>
                     </div>
                 </div>
             </div>

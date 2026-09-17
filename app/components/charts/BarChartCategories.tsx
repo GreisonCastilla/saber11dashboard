@@ -11,7 +11,9 @@ import {
     Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { useYearRange } from './useYearRange';
 import SearchableSelect from '../ui/SearchableSelect';
+import { cleanLabel } from '../../services/textUtils';
 
 ChartJS.register(
     CategoryScale,
@@ -31,14 +33,15 @@ interface CategoryDataItem {
 }
 
 interface BarChartCategoriesProps {
+    years?: number[];
     data: CategoryDataItem[];
     isGlobal?: boolean;
     isHorizontal?: boolean;
     onYearChange?: (option: string, year: number) => void;
 }
 
-export default function BarChartCategories({ data, isGlobal = false, isHorizontal = false, onYearChange }: BarChartCategoriesProps) {
-    const [selectedYear, setSelectedYear] = useState<number>(2014);
+export default function BarChartCategories({ data, isGlobal = false, isHorizontal = false, onYearChange, years }: BarChartCategoriesProps) {
+    const { minYear, maxYear, selectedYear, setSelectedYear } = useYearRange(years);
     const [selectedAreaIndex, setSelectedAreaIndex] = useState<number>(0);
 
     const areas = useMemo(() => {
@@ -79,15 +82,15 @@ export default function BarChartCategories({ data, isGlobal = false, isHorizonta
                 'NO INFORMA': 100
             };
 
-            const orderA = customOrder[a.name.toUpperCase()] || 999;
-            const orderB = customOrder[b.name.toUpperCase()] || 999;
+            const orderA = customOrder[String(a.name ?? '').toUpperCase()] || 999;
+            const orderB = customOrder[String(b.name ?? '').toUpperCase()] || 999;
 
             return orderA - orderB;
         });
     }, [data, selectedYear]);
 
     const chartData = useMemo(() => {
-        const labels = currentItems.map(item => item.name);
+        const labels = currentItems.map(item => cleanLabel(item.name));
         const values = currentItems.map(item => {
             if (isGlobal) {
                 return item.avgGlobal || 0;
@@ -160,8 +163,8 @@ export default function BarChartCategories({ data, isGlobal = false, isHorizonta
                         <input
                             id="cat-year-slider"
                             type="range"
-                            min="2014"
-                            max="2022"
+                            min={minYear}
+                            max={maxYear}
                             step="1"
                             value={selectedYear}
                             onChange={(e) => {
@@ -172,8 +175,8 @@ export default function BarChartCategories({ data, isGlobal = false, isHorizonta
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
                         />
                         <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                            <span>2014</span>
-                            <span>2022</span>
+                            <span>{minYear}</span>
+                            <span>{maxYear}</span>
                         </div>
                     </div>
                 </div>

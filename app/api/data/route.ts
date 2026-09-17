@@ -1,5 +1,5 @@
 export async function POST(req: Request) {
-    const { query } = await req.json();
+    const { query, pageNumber, pageSize } = await req.json();
 
     const response = await fetch(
         "https://www.datos.gov.co/api/v3/views/kgxf-xxbe/query.json",
@@ -12,8 +12,8 @@ export async function POST(req: Request) {
             body: JSON.stringify({
                 query,
                 page: {
-                    pageNumber: 1,
-                    pageSize: 5000,
+                    pageNumber: Number(pageNumber) || 1,
+                    pageSize: Number(pageSize) || 5000,
                 },
                 includeSynthetic: false,
             }),

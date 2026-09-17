@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
     Chart as ChartJS,
     ArcElement,
@@ -9,6 +9,7 @@ import {
     Title
 } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
+import { useYearRange } from './useYearRange';
 
 ChartJS.register(
     ArcElement,
@@ -30,12 +31,13 @@ interface PeriodData {
 }
 
 interface PieChartProps {
+    years?: number[];
     data: PeriodData[];
     onYearChange?: (option: string, year: number) => void;
 }
 
-export default function PieChart({ data, onYearChange }: PieChartProps) {
-    const [selectedYear, setSelectedYear] = useState<number>(2014);
+export default function PieChart({ data, onYearChange, years }: PieChartProps) {
+    const { minYear, maxYear, selectedYear, setSelectedYear } = useYearRange(years);
 
     const currentData = useMemo(() => {
         if (!data) return null;
@@ -46,7 +48,7 @@ export default function PieChart({ data, onYearChange }: PieChartProps) {
         if (!currentData) return { labels: [], datasets: [] };
 
         const colors = currentData.data.map(d => {
-            const labelUpper = d.label.trim().toUpperCase();
+            const labelUpper = String(d.label ?? '').trim().toUpperCase();
             if (labelUpper === 'F' || labelUpper === 'FEMENINO' || labelUpper === 'FEMALE') {
                 return {
                     bg: 'rgba(255, 99, 132, 0.5)', // Rojo
@@ -127,8 +129,8 @@ export default function PieChart({ data, onYearChange }: PieChartProps) {
                 <input
                     id="year-slider-pie"
                     type="range"
-                    min="2014"
-                    max="2022"
+                    min={minYear}
+                    max={maxYear}
                     step="1"
                     value={selectedYear}
                     onChange={(e) => {
@@ -139,8 +141,8 @@ export default function PieChart({ data, onYearChange }: PieChartProps) {
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
                 />
                 <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                    <span>2014</span>
-                    <span>2022</span>
+                    <span>{minYear}</span>
+                    <span>{maxYear}</span>
                 </div>
             </div>
         </div>

@@ -4,40 +4,46 @@ import Footer from "./components/footer";
 import GridChart from "./components/gridChart/GridChart";
 import PageSelector from "./components/PageSelector";
 import Tutorial from "./components/Tutorial";
-import { fetchDatos } from "./api/data/query";
 import { useEffect } from "react";
 import { dbService } from "./services/indexedDB";
+import { loadAllData, FORMATO_DATOS } from "./services/dataLoader";
 
 export default function Home() {
 
   useEffect(() => {
-    fetchDatos("SELECT *").then(async (data) => {
-      try {
-        const parsedData = JSON.parse(data);
+    // Los datos agregados cambian solo cuando el ICFES publica un período nuevo,
+    // así que se reutiliza lo guardado por medio día antes de volver a descargar.
+    const MAX_EDAD_MS = 12 * 60 * 60 * 1000;
 
-        if (!Array.isArray(parsedData)) {
-          console.error("Failed to process data: API response is not an array.", parsedData);
+    const cargar = async () => {
+      try {
+        const guardado = await dbService.getData("dataBundle");
+        const edad = guardado?.actualizado
+          ? Date.now() - new Date(guardado.actualizado).getTime()
+          : Infinity;
+
+        const sirve = guardado?.formato === FORMATO_DATOS;
+
+        if (sirve && edad < MAX_EDAD_MS) {
+          window.dispatchEvent(new Event("datos-actualizados"));
           return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const formattedData = parsedData.map((item: any) => ({
-          ...item,
-          PERIODO: Number(item.PERIODO),
-          PUNT_MATEMATICAS: Number(item.PUNT_MATEMATICAS),
-          PUNT_INGLES: Number(item.PUNT_INGLES),
-          PUNT_SOCIALES_CIUDADANAS: Number(item.PUNT_SOCIALES_CIUDADANAS),
-          PUNT_C_NATURALES: Number(item.PUNT_C_NATURALES),
-          PUNT_LECTURA_CRITICA: Number(item.PUNT_LECTURA_CRITICA),
-          PUNT_GLOBAL: Number(item.PUNT_GLOBAL),
-        }));
-        console.log(formattedData);
-        await dbService.putData("apiResponse", formattedData);
-        console.log("Success: Data saved to IndexedDB");
+        const bundle = await loadAllData();
+        await dbService.putData("dataBundle", bundle);
+        console.log(
+          `Datos cargados: ${bundle.years[0]} a ${bundle.years[bundle.years.length - 1]}`,
+          bundle
+        );
+        window.dispatchEvent(new Event("datos-actualizados"));
       } catch (error) {
         console.error("Failed to process or save data:", error);
+        // Si falla la descarga pero hay datos viejos, que la app siga funcionando.
+        window.dispatchEvent(new Event("datos-actualizados"));
       }
-    });
+    };
+
+    cargar();
   }, []);
 
   return (

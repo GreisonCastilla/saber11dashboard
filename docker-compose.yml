@@ -1,0 +1,20 @@
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: saber11dashboard
+    container_name: saber11dashboard
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      # Token opcional de datos.gov.co (se toma del archivo .env si existe)
+      DATA_GOV_TOKEN: "${DATA_GOV_TOKEN:-}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3

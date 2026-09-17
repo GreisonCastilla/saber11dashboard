@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { matchesSearch, matchScore, tokenize } from '../../services/searchUtils';
+import { cleanLabel } from '../../services/textUtils';
 
 interface SearchableSelectProps {
     options: string[];
@@ -34,10 +36,13 @@ export default function SearchableSelect({
         };
     }, []);
 
-    // Filter options based on search term
-    const filteredOptions = options.filter(option =>
-        option.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Filtra ignorando tildes, mayúsculas y orden de palabras
+    const filteredOptions = useMemo(() => {
+        if (tokenize(searchTerm).length === 0) return options;
+        return options
+            .filter((option) => matchesSearch(option, searchTerm))
+            .sort((a, b) => matchScore(a, searchTerm) - matchScore(b, searchTerm));
+    }, [options, searchTerm]);
 
     const handleSelect = (option: string) => {
         onChange(option);
@@ -56,22 +61,42 @@ export default function SearchableSelect({
                 className="w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md bg-transparent cursor-pointer flex justify-between items-center"
                 onClick={() => setIsOpen(!isOpen)}
             >
-                <span className="truncate">{value || 'Seleccionar opción'}</span>
+                <span className="truncate">{value ? cleanLabel(value) : 'Seleccionar opción'}</span>
                 <span className="text-gray-400 text-xs ml-2">▼</span>
             </div>
 
             {isOpen && (
                 <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-hidden flex flex-col">
-                    <div className="p-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 sticky top-0">
+                    <div className="relative p-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 sticky top-0">
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder={placeholder}
-                            className="w-full p-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="w-full p-1.5 pr-6 text-xs border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-primary"
                             autoFocus
                             onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Escape') {
+                                    setIsOpen(false);
+                                } else if (e.key === 'Enter' && filteredOptions.length > 0) {
+                                    handleSelect(filteredOptions[0]);
+                                }
+                            }}
                         />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                aria-label="Limpiar búsqueda"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSearchTerm('');
+                                }}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs cursor-pointer"
+                            >
+                                ✕
+                            </button>
+                        )}
                     </div>
                     <div className="overflow-y-auto flex-1">
                         {filteredOptions.length > 0 ? (
@@ -83,12 +108,12 @@ export default function SearchableSelect({
                                         option === value ? 'bg-primary/5 text-primary font-medium' : ''
                                     }`}
                                 >
-                                    {option}
+                                    {cleanLabel(option)}
                                 </div>
                             ))
                         ) : (
                             <div className="p-3 text-xs text-gray-400 text-center">
-                                No se encontraron resultados
+                                No se encontraron resultados para &quot;{searchTerm}&quot;
                             </div>
                         )}
                     </div>

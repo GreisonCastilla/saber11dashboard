@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -11,6 +11,7 @@ import {
     Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { useYearRange } from './useYearRange';
 
 ChartJS.register(
     CategoryScale,
@@ -23,18 +24,19 @@ ChartJS.register(
 
 interface CompareDataItem {
     name: string;
-    avgGlobal: number;
+    avgGlobal?: number;
     PERIODO: string;
 }
 
 interface BarChartCompareProps {
+    years?: number[];
     data: CompareDataItem[];
     onYearChange?: (year: number) => void;
 }
 
-export default function BarChartCompare({ data, onYearChange }: BarChartCompareProps) {
+export default function BarChartCompare({ data, onYearChange, years }: BarChartCompareProps) {
     // State for selections
-    const [selectedYear, setSelectedYear] = useState<number>(2014);
+    const { minYear, maxYear, selectedYear, setSelectedYear } = useYearRange(years);
 
     // Filter data based on selection
     const currentItems = useMemo(() => {
@@ -49,9 +51,9 @@ export default function BarChartCompare({ data, onYearChange }: BarChartCompareP
         const noOficialItem = currentItems.find(i => i.name === 'NO OFICIAL');
         const totalItem = currentItems.find(i => i.name === 'TOTAL');
 
-        const oficialVal = oficialItem ? oficialItem.avgGlobal : 0;
-        const noOficialVal = noOficialItem ? noOficialItem.avgGlobal : 0;
-        const totalVal = totalItem ? totalItem.avgGlobal : 0;
+        const oficialVal = oficialItem?.avgGlobal ?? 0;
+        const noOficialVal = noOficialItem?.avgGlobal ?? 0;
+        const totalVal = totalItem?.avgGlobal ?? 0;
 
         return {
             labels: ['OFICIAL', 'NO OFICIAL', 'TOTAL'],
@@ -105,8 +107,8 @@ export default function BarChartCompare({ data, onYearChange }: BarChartCompareP
                     <input
                         id="year-slider-compare"
                         type="range"
-                        min="2014"
-                        max="2022"
+                        min={minYear}
+                        max={maxYear}
                         step="1"
                         value={selectedYear}
                         onChange={(e) => {
@@ -117,8 +119,8 @@ export default function BarChartCompare({ data, onYearChange }: BarChartCompareP
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
                     />
                     <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                        <span>2014</span>
-                        <span>2022</span>
+                        <span>{minYear}</span>
+                        <span>{maxYear}</span>
                     </div>
                 </div>
             </div>

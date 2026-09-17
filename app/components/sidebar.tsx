@@ -2,7 +2,7 @@
 import Logo from "./Logo";
 import { HiChevronLeft } from "react-icons/hi";
 import { HiChevronRight } from "react-icons/hi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMemo } from "react";
 import chart from "../graphics/Graphics.json";
 import AddChart from "./addChart/AddChart";
@@ -10,24 +10,47 @@ import SearchChart from "./input/SearchChart";
 import PageSelector from "./PageSelector";
 import { HiDownload } from "react-icons/hi";
 import { exportToPDF } from "../services/exportService";
+import { matchesSearch, matchScore, tokenize } from "../services/searchUtils";
 
-function filterChartsList(charts: any[], q: string) {
-  const query = q.trim().toLowerCase();
-  if (!query) return charts;
-  return charts.filter((chartItem) => {
-    const itemAny = chartItem as any;
-    const title = (itemAny.title || itemAny.name || "").toString().toLowerCase();
-    const id = (itemAny.id || "").toString().toLowerCase();
-    const tags = (itemAny.tags || []).join(" ").toLowerCase();
-    return title.includes(query) || id.includes(query) || tags.includes(query);
-  });
+type ChartItem = {
+  name: string;
+  typeChart: string;
+  id?: number | string;
+  title?: string;
+  tags?: string[];
+};
+
+function chartLabel(chartItem: ChartItem) {
+  return chartItem.title || chartItem.name;
+}
+
+function filterChartsList(charts: ChartItem[], q: string) {
+  if (tokenize(q).length === 0) return charts;
+  return charts
+    .filter((chartItem) => {
+      const haystack = [
+        chartLabel(chartItem),
+        chartItem.id ?? "",
+        (chartItem.tags || []).join(" "),
+        chartItem.typeChart,
+      ].join(" ");
+      return matchesSearch(haystack, q);
+    })
+    .sort((a, b) => matchScore(chartLabel(a), q) - matchScore(chartLabel(b), q));
 }
 
 export default function Sidebar() {
   const [state, setState] = useState(true); // Desktop: true = open, false = minimized. Mobile: true = open (overlay), false = closed.
   const [query, setQuery] = useState("");
 
-  const filteredCharts = useMemo(() => filterChartsList(chart as any[], query), [query]);
+  const filteredCharts = useMemo(() => filterChartsList(chart as ChartItem[], query), [query]);
+
+  // El tutorial necesita la barra abierta para poder señalar lo que contiene.
+  useEffect(() => {
+    const abrir = () => setState(true);
+    window.addEventListener("abrir-sidebar", abrir);
+    return () => window.removeEventListener("abrir-sidebar", abrir);
+  }, []);
 
   function toggleSidebar() {
     setState(!state);
@@ -94,12 +117,14 @@ export default function Sidebar() {
           <SearchChart onSearch={setQuery} delay={400} />
           <div className="flex flex-col mt-2 max-h-[calc(100vh-250px)] overflow-y-auto items-stretch pr-1">
               {filteredCharts.map((chartItem, i) => (
-                <AddChart key={`${(chartItem as any).id ?? i}-${i}`} chart={chartItem} index={i} />
+                <AddChart key={`${chartItem.id ?? i}-${i}`} chart={chartItem} index={i} />
               ))}
           </div>
           {filteredCharts.length === 0 && (
-            <div className="mt-4 text-center text-gray-500">
-              No se encontraron gráficos.
+            <div className="mt-4 text-center text-gray-500 text-sm">
+              No se encontraron gráficos para <span className="font-medium">&quot;{query}&quot;</span>.
+              <br />
+              Intenta con otra palabra.
             </div>
           )}
 

@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable react-hooks/set-state-in-effect */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { HiX, HiChevronRight, HiChevronLeft } from 'react-icons/hi';
@@ -15,7 +14,43 @@ interface TutorialStep {
     title: string;
     description: string;
     targetId?: string;
+    /** El objetivo vive dentro de la barra lateral: hay que abrirla para señalarlo. */
+    necesitaSidebar?: boolean;
 }
+
+const MARGEN = 16;
+
+/**
+ * ¿Se puede señalar este elemento? Descarta lo que está oculto (`display:none`,
+ * `visibility`, opacidad 0), lo que mide casi nada y lo que quedó fuera de la
+ * pantalla (por ejemplo la barra lateral cerrada, que se desplaza hacia afuera).
+ */
+function esSeñalable(el: HTMLElement): boolean {
+    const rect = el.getBoundingClientRect();
+    if (rect.width < 8 || rect.height < 8) return false;
+    if (rect.right <= 0 || rect.bottom <= 0) return false;
+    if (rect.left >= window.innerWidth || rect.top >= window.innerHeight) return false;
+
+    const estilo = window.getComputedStyle(el);
+    if (estilo.visibility === 'hidden' || estilo.display === 'none') return false;
+    return Number(estilo.opacity) > 0.05;
+}
+
+/**
+ * Busca el objetivo de un paso. Algunos componentes se pintan dos veces (la barra
+ * de páginas existe en la barra lateral y en la superior, y solo una está visible
+ * según el ancho de pantalla), así que hay que quedarse con la que de verdad se ve.
+ */
+function buscarObjetivo(targetId: string): HTMLElement | null {
+    const candidatos = Array.from(
+        document.querySelectorAll<HTMLElement>(`#${targetId}, [data-tutorial="${targetId}"]`)
+    );
+    return candidatos.find(esSeñalable) ?? null;
+}
+
+const mismaCaja = (a: HighlightBox | null, b: HighlightBox) =>
+    !!a && Math.abs(a.top - b.top) < 1 && Math.abs(a.left - b.left) < 1 &&
+    Math.abs(a.width - b.width) < 1 && Math.abs(a.height - b.height) < 1;
 
 const TUTORIAL_STEPS: TutorialStep[] = [
     {
@@ -25,7 +60,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     {
         title: "Agregar Gráficos",
         description: "En esta barra lateral puedes buscar y hacer clic en cualquier gráfico temático (ej. por Estrato, Naturaleza, Género) para agregarlo instantáneamente a tu tablero.",
-        targetId: "tutorial-sidebar-charts"
+        targetId: "tutorial-sidebar-charts",
+        necesitaSidebar: true
     },
     {
         title: "Organizar por Páginas",
@@ -40,7 +76,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     {
         title: "Exportar Reportes",
         description: "Una vez que tengas tu panel configurado a tu gusto, puedes exportarlo como un archivo PDF listo para imprimir o compartir.",
-        targetId: "tutorial-export-pdf"
+        targetId: "tutorial-export-pdf",
+        necesitaSidebar: true
     },
     {
         title: "¡Todo listo!",
@@ -52,12 +89,18 @@ export default function Tutorial() {
     const [isOpen, setIsOpen] = useState(false);
     const [step, setStep] = useState(0);
     const [highlightBox, setHighlightBox] = useState<HighlightBox | null>(null);
+    // Tamaño real de la tarjeta, medido mientras el tutorial está abierto: se
+    // necesita para colocarla sin que tape lo señalado ni se salga de pantalla.
+    const [cardSize, setCardSize] = useState({ ancho: 380, alto: 260 });
     const cardRef = useRef<HTMLDivElement>(null);
 
     // Initial load: check if first time or if event is triggered
     useEffect(() => {
         const completed = localStorage.getItem('saber11_tutorial_completed');
         if (!completed) {
+            // localStorage no existe al renderizar en el servidor, así que esta
+            // comprobación tiene que ocurrir después del montaje.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsOpen(true);
         }
 
@@ -70,43 +113,57 @@ export default function Tutorial() {
         return () => window.removeEventListener('trigger-tutorial', handleTrigger);
     }, []);
 
-    // Track targets dynamically
+    // Seguimiento del objetivo de cada paso.
     useEffect(() => {
-        if (!isOpen) {
-            setHighlightBox(null);
-            return;
-        }
+        if (!isOpen) return;
 
         const stepData = TUTORIAL_STEPS[step];
-        if (stepData && stepData.targetId) {
-            const element = document.getElementById(stepData.targetId);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                
-                const updateBox = () => {
-                    const rect = element.getBoundingClientRect();
-                    setHighlightBox({
-                        top: rect.top,
-                        left: rect.left,
-                        width: rect.width,
-                        height: rect.height
-                    });
-                };
+        const targetId = stepData?.targetId;
 
-                // Minor delay to let scrolling settle
-                const timer = setTimeout(updateBox, 300);
-                
-                window.addEventListener('resize', updateBox);
-                window.addEventListener('scroll', updateBox);
-
-                return () => {
-                    clearTimeout(timer);
-                    window.removeEventListener('resize', updateBox);
-                    window.removeEventListener('scroll', updateBox);
-                };
-            }
+        if (targetId && stepData.necesitaSidebar) {
+            // Si está plegada, el objetivo no se ve (o queda fuera de pantalla).
+            window.dispatchEvent(new Event('abrir-sidebar'));
         }
-        setHighlightBox(null);
+
+        let raf = 0;
+        let yaCentrado = false;
+
+        // Se vuelve a medir en cada cuadro: el objetivo puede aparecer más tarde,
+        // moverse mientras la barra lateral se despliega (medio segundo de
+        // animación), o desplazarse con el scroll suave. Solo se actualiza el
+        // estado cuando la caja cambia de verdad.
+        const medir = () => {
+            const element = targetId ? buscarObjetivo(targetId) : null;
+
+            if (element) {
+                if (!yaCentrado) {
+                    yaCentrado = true;
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                const rect = element.getBoundingClientRect();
+                const caja = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+                setHighlightBox((previa) => (mismaCaja(previa, caja) ? previa : caja));
+            } else {
+                // Nada que señalar: mejor el fondo completo que un marco en un
+                // sitio equivocado.
+                setHighlightBox((previa) => (previa === null ? previa : null));
+            }
+
+            const tarjeta = cardRef.current;
+            if (tarjeta) {
+                const ancho = tarjeta.offsetWidth;
+                const alto = tarjeta.offsetHeight;
+                setCardSize((previo) =>
+                    previo.ancho === ancho && previo.alto === alto ? previo : { ancho, alto }
+                );
+            }
+
+            raf = requestAnimationFrame(medir);
+        };
+
+        raf = requestAnimationFrame(medir);
+        return () => cancelAnimationFrame(raf);
     }, [step, isOpen]);
 
     const handleNext = () => {
@@ -134,10 +191,14 @@ export default function Tutorial() {
     const isFirst = step === 0;
     const isLast = step === TUTORIAL_STEPS.length - 1;
 
-    // Responsive positioning helper
+    /**
+     * Coloca la tarjeta junto a lo señalado sin taparlo: prueba abajo, a la
+     * derecha, arriba y a la izquierda, y se queda con el primer lado donde
+     * quepa de verdad (según el tamaño real de la tarjeta, no uno supuesto).
+     */
     const getCardStyle = (): React.CSSProperties => {
         if (typeof window === 'undefined') return {};
-        
+
         const isMobile = window.innerWidth < 768;
         if (isMobile) {
             return {
@@ -149,47 +210,53 @@ export default function Tutorial() {
             };
         }
 
-        if (!highlightBox) {
-            return {
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-            };
-        }
-
-        // Intuitively place card near target
-        if (currentStep.targetId === 'tutorial-sidebar-charts' || currentStep.targetId === 'tutorial-export-pdf') {
-            return {
-                top: `${Math.min(window.innerHeight - 320, Math.max(20, highlightBox.top + highlightBox.height / 2 - 120))}px`,
-                left: `${highlightBox.left + highlightBox.width + 24}px`,
-            };
-        }
-
-        if (currentStep.targetId === 'tutorial-page-selector') {
-            return {
-                top: `${highlightBox.top + highlightBox.height + 24}px`,
-                left: `${Math.min(window.innerWidth - 420, Math.max(20, highlightBox.left + highlightBox.width / 2 - 175))}px`,
-            };
-        }
-
-        if (currentStep.targetId === 'dashboard-grid') {
-            return {
-                top: `${Math.min(window.innerHeight - 320, Math.max(20, highlightBox.top + 100))}px`,
-                left: `${Math.min(window.innerWidth - 420, Math.max(20, highlightBox.left + highlightBox.width / 2 - 175))}px`,
-            };
-        }
-
-        return {
+        const centrada: React.CSSProperties = {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
+        };
+
+        if (!highlightBox) return centrada;
+
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const { ancho, alto } = cardSize;
+
+        const caja = highlightBox;
+        const centroX = caja.left + caja.width / 2 - ancho / 2;
+        const centroY = caja.top + caja.height / 2 - alto / 2;
+
+        const lados = [
+            { top: caja.top + caja.height + MARGEN, left: centroX,
+              cabe: caja.top + caja.height + MARGEN + alto <= vh - MARGEN },
+            { top: centroY, left: caja.left + caja.width + MARGEN,
+              cabe: caja.left + caja.width + MARGEN + ancho <= vw - MARGEN },
+            { top: caja.top - alto - MARGEN, left: centroX,
+              cabe: caja.top - alto - MARGEN >= MARGEN },
+            { top: centroY, left: caja.left - ancho - MARGEN,
+              cabe: caja.left - ancho - MARGEN >= MARGEN },
+        ];
+
+        const elegido = lados.find((lado) => lado.cabe);
+        // Si el objetivo ocupa casi toda la pantalla no hay hueco libre: la
+        // tarjeta va abajo del todo, que es lo que menos estorba.
+        if (!elegido) {
+            return { top: `${vh - alto - MARGEN}px`, left: `${Math.max(MARGEN, vw / 2 - ancho / 2)}px` };
+        }
+
+        const limitar = (valor: number, maximo: number) =>
+            Math.max(MARGEN, Math.min(valor, maximo - MARGEN));
+
+        return {
+            top: `${limitar(elegido.top, vh - alto)}px`,
+            left: `${limitar(elegido.left, vw - ancho)}px`,
         };
     };
 
     return (
         <div className="fixed inset-0 z-[9999] overflow-hidden pointer-events-none">
             {/* Backdrop & Spotlight cutout using shadow trick */}
-            {highlightBox ? (
+            {currentStep.targetId && highlightBox ? (
                 <div
                     className="fixed z-[9998] border-2 border-primary/80 bg-transparent rounded-xl pointer-events-auto transition-all duration-300 ease-out"
                     style={{

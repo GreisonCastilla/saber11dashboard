@@ -11,7 +11,9 @@ import {
     Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { useYearRange } from './useYearRange';
 import SearchableSelect from '../ui/SearchableSelect';
+import { cleanLabel } from '../../services/textUtils';
 
 ChartJS.register(
     CategoryScale,
@@ -24,11 +26,12 @@ ChartJS.register(
 
 interface DataItem {
     name: string;
-    avgGlobal: number;
+    avgGlobal?: number;
     PERIODO: string;
 }
 
 interface BarChartHorizontalSelectorProps {
+    years?: number[];
     data: DataItem[];
     options: string[];
     comparisonItemName?: string;
@@ -36,17 +39,24 @@ interface BarChartHorizontalSelectorProps {
     onYearChange?: (option: string, year: number) => void;
 }
 
-export default function BarChartHorizontalSelector({ data, options, comparisonItemName, onOptionSelect, onYearChange }: BarChartHorizontalSelectorProps) {
+export default function BarChartHorizontalSelector({ data, options, comparisonItemName, onOptionSelect, onYearChange, years }: BarChartHorizontalSelectorProps) {
     // State
-    const [selectedYear, setSelectedYear] = useState<number>(2014);
-    const [selectedOption, setSelectedOption] = useState<string>(options[0] || '');
+    const { minYear, maxYear, selectedYear, setSelectedYear } = useYearRange(years);
+    // Elección explícita del usuario; mientras no la haya, se usa un valor con datos.
+    const [eleccion, setEleccion] = useState<string | null>(null);
 
-    // Reset option if options prop changes
-    React.useEffect(() => {
-        if (options.length > 0 && !options.includes(selectedOption)) {
-             setSelectedOption(options[0]);
-        }
-    }, [options, selectedOption]);
+    // No todos los colegios tienen datos en todos los años (36 de 506 no llegan al
+    // último), así que por defecto se muestra el primero que sí los tenga.
+    const selectedOption = useMemo(() => {
+        if (eleccion && options.includes(eleccion)) return eleccion;
+        const conDatos = new Set(
+            data
+                .filter((item) => String(item.PERIODO) === String(selectedYear))
+                .map((item) => item.name)
+        );
+        return options.find((option) => conDatos.has(option)) ?? options[0] ?? '';
+    }, [eleccion, options, data, selectedYear]);
+
 
     // Find current selected item
     const currentItem = useMemo(() => {
@@ -62,15 +72,15 @@ export default function BarChartHorizontalSelector({ data, options, comparisonIt
 
     // Prepare Chart Data
     const chartData = useMemo(() => {
-        const itemVal = currentItem ? currentItem.avgGlobal : 0;
-        const comparisonVal = comparisonItem ? comparisonItem.avgGlobal : 0;
+        const itemVal = currentItem?.avgGlobal ?? 0;
+        const comparisonVal = comparisonItem?.avgGlobal ?? 0;
 
-        const labels = [selectedOption];
+        const labels = [cleanLabel(selectedOption)];
         const datasetData = [itemVal];
         const bgColors = ['rgba(53, 162, 235, 0.5)'];
 
         if (comparisonItemName) {
-            labels.push(comparisonItemName);
+            labels.push(cleanLabel(comparisonItemName));
             datasetData.push(comparisonVal);
             bgColors.push('rgba(255, 99, 132, 0.5)'); // Red for comparison
         }
@@ -97,7 +107,7 @@ export default function BarChartHorizontalSelector({ data, options, comparisonIt
             },
             title: {
                 display: true,
-                text: `${selectedOption} vs ${comparisonItemName || ''} - ${selectedYear}`,
+                text: `${cleanLabel(selectedOption)} vs ${cleanLabel(comparisonItemName || '')} - ${selectedYear}`,
             },
         },
         scales: {
@@ -122,7 +132,7 @@ export default function BarChartHorizontalSelector({ data, options, comparisonIt
                         options={options}
                         value={selectedOption}
                         onChange={(value) => {
-                            setSelectedOption(value);
+                            setEleccion(value);
                             if (onOptionSelect) onOptionSelect(value, selectedYear);
                         }}
                         placeholder="Buscar colegio..."
@@ -137,8 +147,8 @@ export default function BarChartHorizontalSelector({ data, options, comparisonIt
                         <input
                             id="h-year-slider"
                             type="range"
-                            min="2014"
-                            max="2022"
+                            min={minYear}
+                            max={maxYear}
                             step="1"
                             value={selectedYear}
                             onChange={(e) => {
@@ -149,8 +159,8 @@ export default function BarChartHorizontalSelector({ data, options, comparisonIt
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
                         />
                         <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                            <span>2014</span>
-                            <span>2022</span>
+                            <span>{minYear}</span>
+                            <span>{maxYear}</span>
                         </div>
                     </div>
                 </div>

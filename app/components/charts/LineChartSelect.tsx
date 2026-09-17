@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -13,6 +13,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import SearchableSelect from '../ui/SearchableSelect';
+import { cleanLabel } from '../../services/textUtils';
 
 ChartJS.register(
     CategoryScale,
@@ -40,13 +41,11 @@ interface LineChartSelectProps {
 }
 
 export default function LineChartSelect({ data, options, isGlobal = false, onOptionSelect }: LineChartSelectProps) {
-    const [selectedOption, setSelectedOption] = useState<string>(options[0] || '');
-
-    useEffect(() => {
-        if (options.length > 0 && !options.includes(selectedOption)) {
-            setSelectedOption(options[0]);
-        }
-    }, [options, selectedOption]);
+    const [eleccion, setEleccion] = useState<string | null>(null);
+    const selectedOption = useMemo(
+        () => (eleccion && options.includes(eleccion) ? eleccion : options[0] ?? ''),
+        [eleccion, options]
+    );
 
     const chartData = useMemo(() => {
         if (!data || data.length === 0) {
@@ -122,7 +121,7 @@ export default function LineChartSelect({ data, options, isGlobal = false, onOpt
             },
             title: {
                 display: true,
-                text: `${isGlobal ? 'Evolución Promedio Global' : 'Evolución por Áreas'} - ${selectedOption}`,
+                text: `${isGlobal ? 'Evolución Promedio Global' : 'Evolución por Áreas'} - ${cleanLabel(selectedOption)}`,
             },
         },
         scales: {
@@ -141,7 +140,7 @@ export default function LineChartSelect({ data, options, isGlobal = false, onOpt
                         options={options}
                         value={selectedOption}
                         onChange={(value) => {
-                            setSelectedOption(value);
+                            setEleccion(value);
                             if (onOptionSelect) onOptionSelect(value, 0); // Year 0 or similar to indicate all history
                         }}
                         placeholder="Seleccionar colegio..."
