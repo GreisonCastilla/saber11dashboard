@@ -14,8 +14,9 @@ export interface ChartRow {
     name: string;
     PERIODO: string;
     label?: string[];
-    datos?: number[];
-    avgGlobal?: number;
+    /** Un `null` es un área que no se evaluó ese año: la gráfica deja el hueco. */
+    datos?: (number | null)[];
+    avgGlobal?: number | null;
 }
 
 /** Fila con las cinco áreas. */

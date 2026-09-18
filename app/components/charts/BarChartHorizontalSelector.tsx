@@ -26,7 +26,7 @@ ChartJS.register(
 
 interface DataItem {
     name: string;
-    avgGlobal?: number;
+    avgGlobal?: number | null;
     PERIODO: string;
 }
 

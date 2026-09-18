@@ -24,7 +24,7 @@ ChartJS.register(
 
 interface CompareDataItem {
     name: string;
-    avgGlobal?: number;
+    avgGlobal?: number | null;
     PERIODO: string;
 }
 

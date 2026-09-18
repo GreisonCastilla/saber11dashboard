@@ -28,8 +28,8 @@ ChartJS.register(
 interface DataItem {
     name: string;
     label?: string[];
-    datos?: number[];
-    avgGlobal?: number;
+    datos?: (number | null)[];
+    avgGlobal?: number | null;
     PERIODO: string;
 }
 
@@ -41,11 +41,36 @@ interface LineChartSelectProps {
 }
 
 export default function LineChartSelect({ data, options, isGlobal = false, onOptionSelect }: LineChartSelectProps) {
+    // Elección explícita del usuario; mientras no la haya, se usa un colegio
+    // que tenga historia. No todos los colegios aparecen todos los años: si se
+    // arranca con el primero alfabético puede salir un solo punto, que no es
+    // ninguna evolución.
     const [eleccion, setEleccion] = useState<string | null>(null);
-    const selectedOption = useMemo(
-        () => (eleccion && options.includes(eleccion) ? eleccion : options[0] ?? ''),
-        [eleccion, options]
-    );
+
+    const selectedOption = useMemo(() => {
+        if (eleccion && options.includes(eleccion)) return eleccion;
+
+        const tieneValor = (item: DataItem) =>
+            isGlobal ? item.avgGlobal != null : item.datos?.some((valor) => valor != null);
+
+        const aniosPorColegio = new Map<string, number>();
+        for (const item of data) {
+            if (!tieneValor(item)) continue;
+            aniosPorColegio.set(item.name, (aniosPorColegio.get(item.name) ?? 0) + 1);
+        }
+
+        let elegido = options[0] ?? '';
+        let maximo = -1;
+        for (const option of options) {
+            const anios = aniosPorColegio.get(option) ?? 0;
+            if (anios > maximo) {
+                maximo = anios;
+                elegido = option;
+            }
+        }
+
+        return elegido;
+    }, [eleccion, options, data, isGlobal]);
 
     const chartData = useMemo(() => {
         if (!data || data.length === 0) {
@@ -59,7 +84,10 @@ export default function LineChartSelect({ data, options, isGlobal = false, onOpt
         }
 
         // Labels are the periods (years)
-        const labels = Array.from(new Set(filteredData.map(item => item.PERIODO))).sort();
+        const conGlobal = filteredData.filter(item => item.avgGlobal != null);
+        const labels = Array.from(
+            new Set((isGlobal ? conGlobal : filteredData).map(item => item.PERIODO))
+        ).sort();
 
         if (isGlobal) {
             const values = labels.map(period => {
@@ -81,7 +109,7 @@ export default function LineChartSelect({ data, options, isGlobal = false, onOpt
             };
         } else {
             // For Areas, we need multiple datasets (one per subject)
-            const subjects = data[0]?.label || [];
+            const subjects = filteredData.find((item) => item.label?.length)?.label || [];
             const colors = [
                 'rgb(53, 162, 235)',   // Blue
                 'rgb(255, 99, 132)',   // Red
@@ -92,7 +120,7 @@ export default function LineChartSelect({ data, options, isGlobal = false, onOpt
 
             const datasets = subjects.map((subject, idx) => {
                 const values = labels.map(period => {
-                    const item = data.find(d => d.PERIODO === period);
+                    const item = filteredData.find(d => d.PERIODO === period);
                     return item && item.datos ? item.datos[idx] : null;
                 });
 
@@ -110,7 +138,28 @@ export default function LineChartSelect({ data, options, isGlobal = false, onOpt
                 datasets
             };
         }
-    }, [data, isGlobal]);
+    }, [data, isGlobal, selectedOption]);
+
+    // Avisos sobre lo que el dataset no tiene, para que un hueco no parezca un error.
+    const { aniosDibujados, aniosSinGlobal, aniosIncompletos } = useMemo(() => {
+        const delColegio = data.filter((item) => item.name === selectedOption);
+        const anio = (item: DataItem) => item.PERIODO;
+
+        // Antes del período 2014-2 el examen no daba puntaje global y solo
+        // evaluaba inglés y matemáticas.
+        const sinGlobal = Array.from(new Set(delColegio.filter((i) => i.avgGlobal == null).map(anio))).sort();
+        const incompletos = Array.from(
+            new Set(delColegio.filter((i) => i.datos?.some((v) => v == null)).map(anio))
+        ).sort();
+        const dibujados = Array.from(
+            new Set(delColegio.filter((i) => (isGlobal ? i.avgGlobal != null : i.datos?.some((v) => v != null))).map(anio))
+        ).sort();
+
+        return { aniosDibujados: dibujados, aniosSinGlobal: sinGlobal, aniosIncompletos: incompletos };
+    }, [data, selectedOption, isGlobal]);
+
+    const listar = (anios: string[]) =>
+        anios.length === 1 ? anios[0] : `${anios.slice(0, -1).join(', ')} y ${anios[anios.length - 1]}`;
 
     const chartOptions = {
         responsive: true,
@@ -148,6 +197,25 @@ export default function LineChartSelect({ data, options, isGlobal = false, onOpt
                 </div>
             </div>
             
+            {aniosDibujados.length === 1 && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    Este colegio solo tiene resultados de {aniosDibujados[0]} en el dataset.
+                </p>
+            )}
+
+            {isGlobal && aniosSinGlobal.length > 0 && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    En {listar(aniosSinGlobal)} el examen todavía no daba puntaje global, así que
+                    {aniosSinGlobal.length === 1 ? ' ese año no aparece' : ' esos años no aparecen'}.
+                </p>
+            )}
+
+            {!isGlobal && aniosIncompletos.length > 0 && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    En {listar(aniosIncompletos)} el examen solo evaluaba inglés y matemáticas.
+                </p>
+            )}
+
             <div className="flex-grow w-full min-h-0 relative">
                 {data.length > 0 ? (
                     <Line options={chartOptions} data={chartData} />

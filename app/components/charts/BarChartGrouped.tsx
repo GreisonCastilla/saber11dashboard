@@ -26,7 +26,7 @@ ChartJS.register(
 interface DataItem {
     name: string;
     label?: string[];
-    datos?: number[];
+    datos?: (number | null)[];
     PERIODO: string;
 }
 

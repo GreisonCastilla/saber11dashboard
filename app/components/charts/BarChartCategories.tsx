@@ -27,8 +27,8 @@ ChartJS.register(
 interface CategoryDataItem {
     name: string;
     label?: string[];
-    datos?: number[];
-    avgGlobal?: number;
+    datos?: (number | null)[];
+    avgGlobal?: number | null;
     PERIODO: string;
 }
 

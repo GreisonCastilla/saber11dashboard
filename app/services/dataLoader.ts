@@ -22,12 +22,17 @@ export interface AggRow {
     categoria: string;
     /** Estudiantes que respaldan el promedio. */
     estudiantes: number;
-    punt_ingles: number;
-    punt_matematicas: number;
-    punt_sociales_ciudadanas: number;
-    punt_c_naturales: number;
-    punt_lectura_critica: number;
-    punt_global: number;
+    /**
+     * Antes del período 2014-2 el examen no daba puntaje global y solo evaluaba
+     * inglés y matemáticas: esas áreas llegan en `null`, que no es lo mismo que
+     * un cero.
+     */
+    punt_ingles: number | null;
+    punt_matematicas: number | null;
+    punt_sociales_ciudadanas: number | null;
+    punt_c_naturales: number | null;
+    punt_lectura_critica: number | null;
+    punt_global: number | null;
 }
 
 /**
@@ -80,16 +85,21 @@ const AVERAGES = [
  * Usa la sintaxis "pipe" de SoQL: primero castear y recortar el año del período
  * ("20224" -> "2022"), después agrupar.
  */
-function buildQuery(categoria?: string, where?: string): string {
+function buildQuery(categoria?: string, where?: string, soloConGlobal = true): string {
     const dims = categoria ? "anio, categoria" : "anio";
     const select = categoria
         ? `substring(PERIODO, 1, 4) AS anio, ${categoria} AS categoria`
         : "substring(PERIODO, 1, 4) AS anio";
-    // Antes de 2014-2 el examen tenía otra escala y no existe PUNT_GLOBAL.
-    const filtro = ["PUNT_GLOBAL IS NOT NULL", where].filter(Boolean).join(" AND ");
+    // Los cortes que alimentan los deslizadores de año se quedan con los períodos
+    // que tienen puntaje global (2014-2 en adelante); la evolución por colegio sí
+    // incluye los años anteriores, con inglés y matemáticas, que es lo que hay.
+    const filtro = [soloConGlobal ? "PUNT_GLOBAL IS NOT NULL" : "", where]
+        .filter(Boolean)
+        .join(" AND ");
+    const donde = filtro ? ` WHERE ${filtro}` : "";
 
     return (
-        `SELECT ${select}, ${CASTS} WHERE ${filtro}` +
+        `SELECT ${select}, ${CASTS}${donde}` +
         ` |> SELECT ${dims}, ${AVERAGES} GROUP BY ${dims} ORDER BY ${dims}`
     );
 }
@@ -119,18 +129,25 @@ const num = (value: unknown) => {
     return Number.isFinite(parsed) ? parsed : 0;
 };
 
+/** El área que no se evaluó ese año queda en null, para dejar un hueco en la gráfica. */
+const numeroONulo = (value: unknown) => {
+    if (value === undefined || value === null || value === "") return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+};
+
 /** Solo cambia los nombres de los campos; los números vienen calculados. */
 function toRows(raw: Record<string, string>[], categoriaPorDefecto = ""): AggRow[] {
     return raw.map((row) => ({
         anio: String(row.anio ?? ""),
         categoria: row.categoria ?? categoriaPorDefecto,
         estudiantes: num(row.estudiantes),
-        punt_ingles: num(row.punt_ingles),
-        punt_matematicas: num(row.punt_matematicas),
-        punt_sociales_ciudadanas: num(row.punt_sociales_ciudadanas),
-        punt_c_naturales: num(row.punt_c_naturales),
-        punt_lectura_critica: num(row.punt_lectura_critica),
-        punt_global: num(row.punt_global),
+        punt_ingles: numeroONulo(row.punt_ingles),
+        punt_matematicas: numeroONulo(row.punt_matematicas),
+        punt_sociales_ciudadanas: numeroONulo(row.punt_sociales_ciudadanas),
+        punt_c_naturales: numeroONulo(row.punt_c_naturales),
+        punt_lectura_critica: numeroONulo(row.punt_lectura_critica),
+        punt_global: numeroONulo(row.punt_global),
     }));
 }
 
@@ -150,7 +167,7 @@ const CONSULTAS: {
     { clave: "estrato", soql: buildQuery("FAMI_ESTRATOVIVIENDA"), porDefecto: "SIN ESPECIFICAR" },
     { clave: "educacionMadre", soql: buildQuery("FAMI_EDUCACIONMADRE"), porDefecto: "SIN ESPECIFICAR" },
     { clave: "educacionPadre", soql: buildQuery("FAMI_EDUCACIONPADRE"), porDefecto: "SIN ESPECIFICAR" },
-    { clave: "bolivarColegios", soql: buildQuery("COLE_NOMBRE_ESTABLECIMIENTO", BOLIVAR) },
+    { clave: "bolivarColegios", soql: buildQuery("COLE_NOMBRE_ESTABLECIMIENTO", BOLIVAR, false) },
 ];
 
 function bundleVacio(): DataBundle {
