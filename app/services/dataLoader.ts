@@ -136,41 +136,75 @@ function toRows(raw: Record<string, string>[], categoriaPorDefecto = ""): AggRow
 
 const BOLIVAR = "COLE_DEPTO_UBICACION = 'BOLIVAR'";
 
-/** Descarga todo lo publicado, desde 2014 hasta el último período disponible. */
-export async function loadAllData(): Promise<DataBundle> {
-    const [
-        naturaleza,
-        estrato,
-        educacionMadre,
-        educacionPadre,
-        genero,
-        nacional,
-        bolivarTotal,
-        bolivarColegios,
-    ] = await Promise.all([
-        queryAll(buildQuery("COLE_NATURALEZA")),
-        queryAll(buildQuery("FAMI_ESTRATOVIVIENDA")),
-        queryAll(buildQuery("FAMI_EDUCACIONMADRE")),
-        queryAll(buildQuery("FAMI_EDUCACIONPADRE")),
-        queryAll(buildQuery("ESTU_GENERO")),
-        queryAll(buildQuery()),
-        queryAll(buildQuery(undefined, BOLIVAR)),
-        queryAll(buildQuery("COLE_NOMBRE_ESTABLECIMIENTO", BOLIVAR)),
-    ]);
+/** Cortes a descargar. El de colegios es el más pesado y llega de último. */
+const CONSULTAS: {
+    clave: keyof Pick<DataBundle, "naturaleza" | "estrato" | "educacionMadre" | "educacionPadre"
+        | "genero" | "nacional" | "bolivarTotal" | "bolivarColegios">;
+    soql: string;
+    porDefecto?: string;
+}[] = [
+    { clave: "nacional", soql: buildQuery(undefined), porDefecto: "PROMEDIO COLOMBIA" },
+    { clave: "bolivarTotal", soql: buildQuery(undefined, BOLIVAR), porDefecto: "PROMEDIO BOLIVAR" },
+    { clave: "naturaleza", soql: buildQuery("COLE_NATURALEZA") },
+    { clave: "genero", soql: buildQuery("ESTU_GENERO"), porDefecto: "NO INFORMA" },
+    { clave: "estrato", soql: buildQuery("FAMI_ESTRATOVIVIENDA"), porDefecto: "SIN ESPECIFICAR" },
+    { clave: "educacionMadre", soql: buildQuery("FAMI_EDUCACIONMADRE"), porDefecto: "SIN ESPECIFICAR" },
+    { clave: "educacionPadre", soql: buildQuery("FAMI_EDUCACIONPADRE"), porDefecto: "SIN ESPECIFICAR" },
+    { clave: "bolivarColegios", soql: buildQuery("COLE_NOMBRE_ESTABLECIMIENTO", BOLIVAR) },
+];
 
-    const nacionalRows = toRows(nacional, "PROMEDIO COLOMBIA");
-
+function bundleVacio(): DataBundle {
     return {
         formato: FORMATO_DATOS,
-        years: nacionalRows.map((row) => Number(row.anio)).filter(Number.isFinite),
-        naturaleza: toRows(naturaleza),
-        estrato: toRows(estrato, "SIN ESPECIFICAR"),
-        educacionMadre: toRows(educacionMadre, "SIN ESPECIFICAR"),
-        educacionPadre: toRows(educacionPadre, "SIN ESPECIFICAR"),
-        genero: toRows(genero, "NO INFORMA"),
-        nacional: nacionalRows,
-        bolivarTotal: toRows(bolivarTotal, "PROMEDIO BOLIVAR"),
-        bolivarColegios: toRows(bolivarColegios),
+        years: [],
+        naturaleza: [],
+        estrato: [],
+        educacionMadre: [],
+        educacionPadre: [],
+        genero: [],
+        nacional: [],
+        bolivarTotal: [],
+        bolivarColegios: [],
         actualizado: new Date().toISOString(),
     };
+}
+
+/**
+ * Copia en memoria para que los gráficos no tengan que releer (y volver a
+ * deserializar) el paquete completo desde IndexedDB cada uno por su cuenta.
+ */
+let enMemoria: DataBundle | null = null;
+
+export const getBundle = () => enMemoria;
+
+export function setBundle(bundle: DataBundle) {
+    enMemoria = bundle;
+    window.dispatchEvent(new Event("datos-actualizados"));
+}
+
+/**
+ * Descarga todo lo publicado, desde 2014 hasta el último período disponible.
+ *
+ * Las consultas corren en paralelo y `onAvance` se llama con lo que ya llegó,
+ * así cada gráfico se pinta apenas tiene sus datos en vez de esperar a que
+ * termine la consulta más pesada (la de los 506 colegios de Bolívar).
+ */
+export async function loadAllData(onAvance?: (parcial: DataBundle) => void): Promise<DataBundle> {
+    const bundle = bundleVacio();
+
+    await Promise.all(
+        CONSULTAS.map(async ({ clave, soql, porDefecto }) => {
+            const filas = toRows(await queryAll(soql), porDefecto);
+            bundle[clave] = filas;
+
+            if (clave === "nacional") {
+                bundle.years = filas.map((row) => Number(row.anio)).filter(Number.isFinite);
+            }
+
+            onAvance?.({ ...bundle });
+        })
+    );
+
+    bundle.actualizado = new Date().toISOString();
+    return bundle;
 }

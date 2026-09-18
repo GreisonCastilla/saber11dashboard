@@ -6,40 +6,38 @@ import PageSelector from "./components/PageSelector";
 import Tutorial from "./components/Tutorial";
 import { useEffect } from "react";
 import { dbService } from "./services/indexedDB";
-import { loadAllData, FORMATO_DATOS } from "./services/dataLoader";
+import { loadAllData, setBundle, FORMATO_DATOS } from "./services/dataLoader";
 
 export default function Home() {
 
   useEffect(() => {
-    // Los datos agregados cambian solo cuando el ICFES publica un período nuevo,
-    // así que se reutiliza lo guardado por medio día antes de volver a descargar.
+    // Los datos agregados solo cambian cuando el ICFES publica un período nuevo.
     const MAX_EDAD_MS = 12 * 60 * 60 * 1000;
 
     const cargar = async () => {
+      let guardado = null;
+
       try {
-        const guardado = await dbService.getData("dataBundle");
-        const edad = guardado?.actualizado
-          ? Date.now() - new Date(guardado.actualizado).getTime()
-          : Infinity;
+        guardado = await dbService.getData("dataBundle");
+      } catch (error) {
+        console.error("No se pudo leer lo guardado:", error);
+      }
 
-        const sirve = guardado?.formato === FORMATO_DATOS;
+      // Si hay algo guardado se muestra de inmediato, aunque esté vencido:
+      // es mejor ver el tablero al instante y refrescar por detrás.
+      const sirve = guardado?.formato === FORMATO_DATOS;
+      if (sirve) setBundle(guardado);
 
-        if (sirve && edad < MAX_EDAD_MS) {
-          window.dispatchEvent(new Event("datos-actualizados"));
-          return;
-        }
+      const vigente = sirve && Date.now() - new Date(guardado.actualizado).getTime() < MAX_EDAD_MS;
+      if (vigente) return;
 
-        const bundle = await loadAllData();
+      try {
+        // Cada corte que llega se pinta sin esperar a los demás.
+        const bundle = await loadAllData((parcial) => setBundle(parcial));
+        setBundle(bundle);
         await dbService.putData("dataBundle", bundle);
-        console.log(
-          `Datos cargados: ${bundle.years[0]} a ${bundle.years[bundle.years.length - 1]}`,
-          bundle
-        );
-        window.dispatchEvent(new Event("datos-actualizados"));
       } catch (error) {
         console.error("Failed to process or save data:", error);
-        // Si falla la descarga pero hay datos viejos, que la app siga funcionando.
-        window.dispatchEvent(new Event("datos-actualizados"));
       }
     };
 

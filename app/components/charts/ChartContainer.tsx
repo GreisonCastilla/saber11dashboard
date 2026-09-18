@@ -1,8 +1,7 @@
 import { MdClose, MdDragIndicator } from "react-icons/md";
 import { useChart } from "../../contexts/ChartContext";
 import { useEffect, useState, useMemo } from "react";
-import { dbService } from "../../services/indexedDB";
-import { FORMATO_DATOS } from "../../services/dataLoader";
+import { getBundle, FORMATO_DATOS } from "../../services/dataLoader";
 import type { DataBundle } from "../../services/dataLoader";
 import { datosDelGrafico, colegiosDeBolivar } from "../../services/chartData";
 import type { ChartRow, GeneroRow } from "../../services/chartData";
@@ -29,15 +28,11 @@ export default function ChartContainer({
     const [bundle, setBundle] = useState<DataBundle | null>(null);
 
     useEffect(() => {
-        const cargar = async () => {
-            try {
-                const guardado = await dbService.getData('dataBundle');
-                // Un paquete guardado con un formato anterior se descarta:
-                // page.tsx ya está descargando el nuevo.
-                if (guardado?.formato === FORMATO_DATOS) setBundle(guardado as DataBundle);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
+        // Los datos vienen de la copia en memoria que mantiene la página: así
+        // 17 gráficos no releen 17 veces el mismo paquete desde IndexedDB.
+        const cargar = () => {
+            const compartido = getBundle();
+            if (compartido?.formato === FORMATO_DATOS) setBundle(compartido);
         };
 
         cargar();
